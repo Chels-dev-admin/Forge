@@ -1,0 +1,914 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge · Train &amp; Fuel</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forge">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --bg:#0F1115; --surface:#171A20; --surface2:#1F232B; --line:#2A2F39;
+    --text:#ECEDF1; --muted:#7E8593; --accent:#F6B33D; --accent-ink:#1A140A;
+    --rest:#5B6B7A; --cool:#5FA8B8; --warn:#E0774A;
+    --mono:'Space Mono',ui-monospace,monospace; --sans:'Archivo',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 15% -10%, rgba(246,179,61,.06), transparent 45%);}
+  .wrap{max-width:980px; margin:0 auto; padding:26px 22px 80px}
+
+  /* NAV */
+  nav{display:flex; align-items:center; gap:18px; margin-bottom:34px; flex-wrap:wrap}
+  .brand{font-weight:900; font-size:20px; letter-spacing:.02em; text-transform:uppercase}
+  .brand b{color:var(--accent)}
+  .tabs{display:flex; gap:6px; margin-left:auto; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:5px}
+  .tab{cursor:pointer; border:0; background:transparent; color:var(--muted); font-family:var(--sans);
+    font-weight:700; font-size:13px; letter-spacing:.02em; padding:9px 16px; border-radius:8px; transition:.15s}
+  .tab:hover{color:var(--text)}
+  .tab.active{background:var(--accent); color:var(--accent-ink)}
+  .tab:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin:0 0 12px}
+  h1{font-weight:900; font-size:clamp(30px,5.4vw,52px); line-height:.98; letter-spacing:-.02em; margin:0 0 12px; text-transform:uppercase}
+  h1 span{color:var(--muted); font-weight:400}
+  .sub{color:var(--muted); max-width:58ch; margin:0 0 30px; font-size:15px}
+
+  .console{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px}
+  .field{padding:16px 0; border-bottom:1px solid var(--line)}
+  .field:first-child{padding-top:0}
+  .field.last{border-bottom:0}
+  .flabel{display:flex; align-items:baseline; gap:10px; margin-bottom:12px}
+  .flabel .n{font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .flabel .t{font-weight:700; font-size:14px}
+  .seg{display:flex; flex-wrap:wrap; gap:8px}
+  .opt{appearance:none; cursor:pointer; background:var(--surface2); color:var(--text); border:1px solid var(--line);
+    border-radius:9px; padding:10px 14px; font-family:var(--sans); font-size:13px; font-weight:600;
+    transition:border-color .15s, background .15s, transform .05s; text-align:left}
+  .opt small{display:block; font-weight:400; color:var(--muted); font-size:11px; margin-top:2px}
+  .opt:hover{border-color:#3a4150} .opt:active{transform:translateY(1px)}
+  .opt.active{border-color:var(--accent); background:rgba(246,179,61,.10)}
+  .opt.active small{color:var(--text)}
+  .opt.mini{min-width:52px; text-align:center; font-family:var(--mono)}
+  .opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .num{width:100%; background:var(--surface2); color:var(--text); border:1px solid var(--line); border-radius:9px;
+    padding:11px 13px; font-family:var(--mono); font-size:14px}
+  .num:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent)}
+  .numrow{display:flex; gap:10px} .numrow>div{flex:1}
+  .hint{color:var(--muted); font-size:11px; font-family:var(--mono); margin-top:6px}
+
+  .build{margin-top:22px; width:100%; cursor:pointer; border:0; border-radius:11px; background:var(--accent);
+    color:var(--accent-ink); font-family:var(--sans); font-weight:900; letter-spacing:.02em; text-transform:uppercase;
+    font-size:15px; padding:16px; transition:filter .15s, transform .05s}
+  .build:hover{filter:brightness(1.06)} .build:active{transform:translateY(1px)}
+  .build:disabled{opacity:.55; cursor:default}
+  .inputerr{color:var(--warn); font-size:13px; margin-top:12px; font-weight:600}
+
+  #trainOut,#fuelOut{margin-top:32px}
+  .summary{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:22px; margin-bottom:14px}
+  .summary .headline{font-weight:900; font-size:clamp(20px,3.4vw,28px); letter-spacing:-.01em; margin:0}
+  .meta{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px}
+  .meta b{color:var(--text)} .meta .arrow{color:var(--accent); padding:0 6px}
+  .stats{display:flex; flex-wrap:wrap; gap:22px 26px; margin-top:16px; padding-top:16px; border-top:1px solid var(--line)}
+  .stat .k{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase}
+  .stat .v{font-weight:700; font-size:18px}
+  .stat .v small{font-weight:400; font-size:12px; color:var(--muted)}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:14px}
+  .day{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:18px; opacity:0; transform:translateY(8px); animation:rise .45s forwards}
+  @keyframes rise{to{opacity:1; transform:none}}
+  .day.rest{background:transparent; border-style:dashed}
+  .dhead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px}
+  .dtag{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.14em}
+  .dtag.rtag{color:var(--rest)}
+  .dname{font-weight:900; font-size:18px; letter-spacing:-.01em; text-transform:uppercase; margin:2px 0 0}
+  .dots{display:flex; gap:4px} .dot{width:7px; height:7px; border-radius:50%; background:var(--line)} .dot.on{background:var(--accent)}
+  .block{display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:9px 0; border-top:1px solid var(--line)}
+  .block .m{font-size:14px; font-weight:600} .block .s{font-family:var(--mono); font-size:12px; color:var(--accent); text-align:right; white-space:nowrap}
+  .block .r{grid-column:1/-1; font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .finisher{margin-top:12px; padding:10px 12px; border-radius:9px; background:rgba(246,179,61,.09); border:1px solid rgba(246,179,61,.25)}
+  .warmup{margin:0 0 12px; padding:10px 12px; border-radius:9px; background:rgba(95,168,184,.10); border:1px solid rgba(95,168,184,.28)}
+  .warmup .wk{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--cool); text-transform:uppercase}
+  .warmup .wv{font-size:13px; margin-top:2px}
+  .finisher .fk{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--accent); text-transform:uppercase}
+  .finisher .fv{font-size:13px; margin-top:2px}
+  .rest .rbody{color:var(--muted); font-size:13px}
+
+  .panel{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:22px; margin-top:14px}
+  .panel h3{font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 14px}
+  .panel ol,.panel ul{margin:0; padding-left:20px} .panel li{margin-bottom:9px; font-size:14px; color:#cfd2da} .panel li:last-child{margin-bottom:0}
+  .disclaimer{color:var(--muted); font-size:12px; margin-top:22px; line-height:1.6}
+  .empty{border:1px dashed var(--line); border-radius:14px; padding:40px 22px; text-align:center; color:var(--muted)}
+  .empty .big{font-family:var(--mono); color:var(--text); font-size:14px; letter-spacing:.06em}
+
+  /* FUEL */
+  .bignum{display:flex; align-items:baseline; gap:10px} .bignum .kcal{font-weight:900; font-size:clamp(38px,8vw,64px); letter-spacing:-.03em; line-height:1}
+  .bignum .u{font-family:var(--mono); color:var(--muted); font-size:13px}
+  .macros{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px}
+  .macro{border:1px solid var(--line); border-radius:11px; padding:14px; background:var(--surface2)}
+  .macro .mk{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+  .macro .mv{font-weight:800; font-size:22px; margin-top:2px} .macro .mp{font-family:var(--mono); font-size:11px; color:var(--accent)}
+  .macro .mbar{height:4px; background:var(--line); border-radius:3px; margin-top:8px; overflow:hidden}
+  .macro .mbar i{display:block; height:100%; background:var(--accent)}
+  .meal{border-top:1px solid var(--line); padding:14px 0}
+  .meal .slot{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+  .meal .sname{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .meal .scal{font-family:var(--mono); font-size:12px; color:var(--accent)}
+  .meal .opt2{font-size:14px; margin-top:7px} .meal .opt2 b{color:var(--text)} .meal .opt2 span{color:var(--muted)}
+  .caution{border:1px solid rgba(224,119,74,.4); background:rgba(224,119,74,.08); border-radius:12px; padding:16px 18px; margin-top:14px}
+  .caution h4{margin:0 0 6px; font-size:14px; color:var(--warn)} .caution p{margin:0; font-size:13px; color:#d7c3b6}
+  .cycle{border:1px solid rgba(224,138,176,.35); background:rgba(224,138,176,.07); border-radius:14px; padding:20px; margin-bottom:14px}
+  .cycle .ctag{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#E08AB0}
+  .cycle .cname{font-weight:900; font-size:clamp(18px,3vw,24px); letter-spacing:-.01em; margin:4px 0 0; text-transform:capitalize}
+  .pbar{display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 4px}
+  .pchip{font-family:var(--mono); font-size:11px; letter-spacing:.05em; padding:5px 10px; border-radius:20px; border:1px solid var(--line); color:var(--muted)}
+  .pchip.on{border-color:#E08AB0; color:#E08AB0; background:rgba(224,138,176,.12)}
+  .cptr{margin:10px 0 0; padding-left:20px} .cptr li{font-size:14px; color:#d9ccd3; margin-bottom:8px} .cptr li:last-child{margin-bottom:0}
+  .cfoods{margin-top:12px} .cfoods .fk2{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#E08AB0; margin-bottom:8px}
+  .cfoods ul{margin:0; padding-left:20px} .cfoods li{font-size:14px; color:#d9ccd3; margin-bottom:6px}
+
+  .errbox{border:1px solid #4a2a2a; background:#1d1516; border-radius:14px; padding:22px}
+  .errbox h3{margin:0 0 8px; font-size:16px; font-weight:800} .errbox p{margin:0 0 16px; color:var(--muted); font-size:14px}
+  .errbox button{cursor:pointer; border:1px solid var(--line); background:var(--surface2); color:var(--text); font-family:var(--sans); font-weight:700; font-size:13px; border-radius:9px; padding:11px 16px}
+  .errbox button:hover{border-color:var(--accent)}
+  .loading{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:40px 22px; text-align:center}
+  .loading .bar{height:4px; border-radius:3px; background:var(--line); overflow:hidden; max-width:280px; margin:0 auto 18px}
+  .loading .bar i{display:block; height:100%; width:40%; background:var(--accent); animation:slide 1.1s ease-in-out infinite}
+  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+  .loading .msg{font-family:var(--mono); font-size:13px; color:var(--muted)}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(8,9,12,.74); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; padding:24px 16px; z-index:60; overflow:auto}
+  .modal{background:var(--surface); border:1px solid var(--line); border-radius:16px; max-width:540px; width:100%; padding:24px; margin:auto}
+  .qzhead{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px}
+  .qzhead h2{font-weight:900; font-size:clamp(21px,4vw,29px); letter-spacing:-.01em; margin:0; text-transform:uppercase}
+  .qzx{background:none; border:0; color:var(--muted); font-size:26px; line-height:1; cursor:pointer; padding:0 4px}
+  .qzx:hover{color:var(--text)}
+  .qzintro,.qzres,.qznote{font-size:14px; color:var(--muted); margin:0 0 14px}
+  .qzres{color:var(--text); font-size:15px}
+  .qznote{border-top:1px solid var(--line); padding-top:14px; margin-bottom:0}
+  .qzq{margin:16px 0} .qzql{font-weight:700; font-size:14px; margin-bottom:10px}
+  .qzopts{display:flex; flex-direction:column; gap:8px} .qzopts .opt{width:100%}
+  .qzbtns{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap} .qzbtns .build{margin-top:0; flex:1}
+  .qzsecondary{background:var(--surface2); border:1px solid var(--line); color:var(--text); border-radius:11px; font-family:var(--sans); font-weight:700; padding:12px 18px; cursor:pointer}
+  .qzsecondary:hover{border-color:var(--accent)}
+  .quizlink{flex-basis:100%; margin-top:6px; background:none; border:0; color:var(--accent); font-family:var(--mono); font-size:12px; cursor:pointer; text-align:left; padding:2px 0}
+  .quizlink:hover{text-decoration:underline; text-underline-offset:3px}
+  .actbar{display:flex; justify-content:flex-end; margin-bottom:12px}
+  .savebtn{cursor:pointer; background:var(--surface2); border:1px solid var(--line); color:var(--text); font-family:var(--sans); font-weight:700; font-size:13px; border-radius:10px; padding:10px 16px}
+  .savebtn:hover{border-color:var(--accent); color:var(--accent)}
+  .saved{display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 18px; margin-bottom:10px}
+  .svname{font-weight:700; font-size:15px} .svline{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:3px}
+  .svact{display:flex; gap:8px; flex-shrink:0}
+  .svload,.svdel{cursor:pointer; border-radius:9px; font-family:var(--sans); font-weight:700; font-size:13px; padding:9px 14px; border:1px solid var(--line); background:var(--surface2); color:var(--text)}
+  .svload:hover{border-color:var(--accent); color:var(--accent)} .svdel:hover{border-color:var(--warn); color:var(--warn)}
+  .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--accent-ink); font-weight:800; font-size:14px; padding:12px 22px; border-radius:12px; opacity:0; transition:opacity .3s, transform .3s; z-index:80}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .hidden{display:none}
+  @media (prefers-reduced-motion:reduce){.day{animation:none; opacity:1; transform:none} .loading .bar i{animation:none; width:100%}}
+  @media (max-width:520px){.macros{grid-template-columns:1fr} .numrow{flex-direction:column} .tabs{margin-left:0} nav{gap:12px}}
+</style>
+
+<div class="wrap">
+  <nav>
+    <div class="brand">Forge<b>.</b></div>
+    <div class="tabs">
+      <button class="tab active" data-page="train">Train</button>
+      <button class="tab" data-page="fuel">Fuel</button>
+      <button class="tab" data-page="saved">Saved</button>
+    </div>
+  </nav>
+
+  <!-- TRAIN PAGE -->
+  <section id="page-train">
+    <p class="eyebrow" id="trainEyebrow">Strength programming · Engine v2</p>
+    <h1>Build <span>/</span> your week</h1>
+    <p class="sub">Pick a style and setting, tell it your body and goal, and get a structured multi-day plan — real movements, loading, and how to progress.</p>
+    <div class="console" id="trainConsole"></div>
+    <div id="trainOut"><div class="empty"><div class="big">Set your inputs, then build the week.</div></div></div>
+  </section>
+
+  <!-- FUEL PAGE -->
+  <section id="page-fuel" class="hidden">
+    <p class="eyebrow" id="fuelEyebrow">Nutrition · Engine v2</p>
+    <h1>Fuel <span>/</span> the build</h1>
+    <p class="sub">Enter your details and goal for a sustainable daily calorie and macro target, plus a sample day of balanced, whole-food meals. General guidance — not a substitute for a doctor or dietitian.</p>
+    <div class="console" id="fuelConsole"></div>
+    <div id="fuelOut"><div class="empty"><div class="big">Fill in your details, then build the plan.</div></div></div>
+  </section>
+
+  <section id="page-saved" class="hidden">
+    <p class="eyebrow">On this device · Engine v2</p>
+    <h1>Saved <span>/</span> workouts</h1>
+    <p class="sub">Your saved weeks live here, stored privately on this device. Load one to view it again or use it as a starting point.</p>
+    <div id="savedOut"></div>
+  </section>
+</div>
+
+<script>
+/* =================== NAVIGATION =================== */
+function showPage(p){
+  document.getElementById('page-train').classList.toggle('hidden', p!=='train');
+  document.getElementById('page-fuel').classList.toggle('hidden', p!=='fuel');
+  document.getElementById('page-saved').classList.toggle('hidden', p!=='saved');
+  if(p==='saved') renderSaved();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.page===p));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showPage(t.dataset.page)));
+
+/* =================== TRAIN =================== */
+const train = { category:'movement', style:'weightlifting', location:'gym', body:'meso', goal:'muscular', days:4, level:'intermediate' };
+
+const CATEGORY_LABEL = {movement:'Strength & Movement', combat:'Combat Sports', weapon:'Weapon Arts'};
+const CATEGORY = {
+  movement:['weightlifting','calisthenics','bodyweight','pilates','yoga'],
+  combat:['boxing','muaythai','bjj','wrestling','mma','karate'],
+  weapon:['fencing','kendo','hema','kali','staff'],
+};
+const STYLE_OPT = {
+  weightlifting:{t:'Weightlifting', d:'Barbells & dumbbells'}, calisthenics:{t:'Calisthenics', d:'Skill-based bodyweight'},
+  bodyweight:{t:'Bodyweight', d:'Simple, no gear'}, pilates:{t:'Pilates', d:'Core control & mat'}, yoga:{t:'Yoga', d:'Mobility & breath'},
+  boxing:{t:'Boxing', d:'Hands, footwork, defence'}, muaythai:{t:'Muay Thai / Kickboxing', d:'Strikes, clinch, kicks'},
+  bjj:{t:'BJJ / Grappling', d:'Ground control & submissions'}, wrestling:{t:'Wrestling / Judo', d:'Takedowns & throws'},
+  mma:{t:'MMA', d:'Striking + grappling'}, karate:{t:'Karate / Taekwondo', d:'Forms & point sparring'},
+  fencing:{t:'Fencing', d:'Foil / épée / sabre'}, kendo:{t:'Kendo', d:'Shinai cuts & footwork'},
+  hema:{t:'HEMA / Longsword', d:'Historical swordplay'}, kali:{t:'Kali / Escrima', d:'Stick & flow drills'},
+  staff:{t:'Bo Staff / Forms', d:'Weapon forms & spins'},
+};
+const MOVE_GOALS = [ {v:'lean',t:'Lean & defined',d:'Low body-fat'},{v:'athletic',t:'Athletic',d:'Balanced, capable'},
+  {v:'muscular',t:'Muscular',d:'Size & shape'},{v:'strong',t:'Strong',d:'Max force'},{v:'maintenance',t:'Maintenance',d:'Stay sharp, low volume'} ];
+const FIGHT_GOALS = [ {v:'skill',t:'Skill & technique',d:'Sharpen the craft'},{v:'conditioning',t:'Fight conditioning',d:'Gas tank & work rate'},
+  {v:'competition',t:'Competition prep',d:'Peak & spar'},{v:'maintenance',t:'Maintenance',d:'Keep sharp, low volume'} ];
+function goalOpts(style){ return (CATEGORY.combat.indexOf(style)>=0||CATEGORY.weapon.indexOf(style)>=0) ? FIGHT_GOALS : MOVE_GOALS; }
+function goalValid(style,goal){ return goalOpts(style).some(function(g){return g.v===goal;}); }
+function defaultGoal(style){ return goalOpts(style)[0].v; }
+const LOC_OPTS = [{v:'gym',t:'Gym',d:'Full equipment'},{v:'home',t:'Home',d:'Minimal equipment'}];
+const BODY_OPTS = [{v:'ecto',t:'Ectomorph',d:'Lean, hard gainer'},{v:'meso',t:'Mesomorph',d:'Athletic, builds easily'},{v:'endo',t:'Endomorph',d:'Stockier, gains readily'}];
+const DAY_OPTS = [{v:2,t:'2'},{v:3,t:'3'},{v:4,t:'4'},{v:5,t:'5'},{v:6,t:'6'}];
+const LEVEL_OPTS = [{v:'beginner',t:'Beginner',d:'< 1 year'},{v:'intermediate',t:'Intermediate',d:'1–3 years'},{v:'advanced',t:'Advanced',d:'3+ years'}];
+
+const STYLE_KIND = {weightlifting:'strength', calisthenics:'strength', bodyweight:'strength', pilates:'mind', yoga:'mind', boxing:'combat', muaythai:'combat', bjj:'combat', wrestling:'combat', mma:'combat', karate:'combat', fencing:'weapon', kendo:'weapon', hema:'weapon', kali:'weapon', staff:'weapon'};
+const STYLE_LABEL = {weightlifting:'Weightlifting', calisthenics:'Calisthenics', bodyweight:'Bodyweight', pilates:'Pilates', yoga:'Yoga', boxing:'Boxing', muaythai:'Muay Thai / Kickboxing', bjj:'BJJ / Grappling', wrestling:'Wrestling / Judo', mma:'MMA', karate:'Karate / Taekwondo', fencing:'Fencing', kendo:'Kendo', hema:'HEMA / Longsword', kali:'Kali / Escrima', staff:'Bo Staff / Weapon Forms'};
+const LOC_LABEL = {gym:'Gym', home:'Home'};
+const BODY_LABEL = {ecto:'Ectomorph', meso:'Mesomorph', endo:'Endomorph'};
+const GOAL_LABEL = {lean:'Lean & defined', athletic:'Athletic', muscular:'Muscular', strong:'Strong', maintenance:'Maintenance', skill:'Skill & technique', conditioning:'Fight conditioning', competition:'Competition prep'};
+const LEVEL_LABEL = {beginner:'Beginner', intermediate:'Intermediate', advanced:'Advanced'};
+const EMPHASIS = {lean:'Conditioning + tone', athletic:'Mixed strength & size', muscular:'Hypertrophy', strong:'Maximal strength', maintenance:'Upkeep & maintenance'};
+const SPLIT_LABEL = {2:'Full-Body A/B', 3:'Push / Pull / Legs', 4:'Upper / Lower', 5:'PPL + Upper/Lower', 6:'Push/Pull/Legs \u00d72'};
+
+/* ---- strength library: pattern -> style -> {gym,home} ---- */
+function P(gym,home){return {gym,home};}
+const EX = {
+  horiz_push:{c:1, wl:P('Barbell Bench Press','Dumbbell Bench Press'), cal:P('Ring Push-Up','Push-Up'), bw:P('Push-Up (elevate feet to progress)','Push-Up (elevate feet to progress)')},
+  incline_push:{c:1, wl:P('Incline Dumbbell Press','Incline Dumbbell Press'), cal:P('Ring Archer Push-Up','Decline Push-Up'), bw:P('Decline Push-Up','Decline Push-Up')},
+  vert_push:{c:1, wl:P('Standing Overhead Press','Seated DB Shoulder Press'), cal:P('Wall Handstand Push-Up progression','Pike Push-Up'), bw:P('Pike Push-Up','Pike Push-Up')},
+  horiz_pull:{c:1, wl:P('Barbell Row','Single-Arm DB Row'), cal:P('Ring Row','Inverted Row (table/bar)'), bw:P('Inverted Row (under a table)','Inverted Row (under a table)')},
+  vert_pull:{c:1, wl:P('Lat Pulldown','Band Pulldown'), cal:P('Pull-Up progression','Doorway / Band-Assisted Pull-Up'), bw:P('Pull-Up (assisted as needed)','Pull-Up (assisted as needed)')},
+  squat:{c:1, wl:P('Back Squat','Goblet Squat'), cal:P('Pistol Squat progression','Bulgarian Split Squat'), bw:P('Bulgarian Split Squat','Bulgarian Split Squat')},
+  hinge:{c:1, wl:P('Romanian Deadlift','DB Romanian Deadlift'), cal:P('Nordic Curl progression','Single-Leg Glute Bridge'), bw:P('Single-Leg Glute Bridge','Single-Leg Glute Bridge')},
+  lunge:{c:1, wl:P('Walking Lunge','DB Reverse Lunge'), cal:P('Jumping Lunge','Reverse Lunge'), bw:P('Reverse Lunge','Reverse Lunge')},
+  biceps:{c:0, wl:P('Barbell Curl','Dumbbell Curl'), cal:P('Ring / Chin-Up Curl','Chin-Up (curl grip)'), bw:P('Chin-Up (curl grip)','Chin-Up (curl grip)')},
+  triceps:{c:0, wl:P('Cable Pushdown','DB Overhead Extension'), cal:P('Ring Dip','Bench Dip'), bw:P('Bench Dip','Bench Dip')},
+  sdelt:{c:0, wl:P('Cable Lateral Raise','DB Lateral Raise'), cal:P('Pseudo-Planche Lean','Pike Shoulder Tap'), bw:P('Pike Shoulder Tap','Pike Shoulder Tap')},
+  calves:{c:0, wl:P('Standing Calf Raise','DB Calf Raise'), cal:P('Single-Leg Calf Raise','Single-Leg Calf Raise'), bw:P('Single-Leg Calf Raise','Single-Leg Calf Raise')},
+  core:{c:0, wl:P('Cable Crunch','Weighted Plank'), cal:P('Hanging Leg Raise / L-Sit','Hollow Hold + Leg Raise'), bw:P('Hollow Hold + Leg Raise','Hollow Hold + Leg Raise')},
+};
+function resolveEx(pat, style, loc){
+  const e = EX[pat]; const k = {weightlifting:'wl', calisthenics:'cal', bodyweight:'bw'}[style];
+  const g = e[k] || e.bw; return g[loc] || g.home || g.gym;
+}
+const COND = {gym:'Intervals on rower or bike \u2014 12 min, 30s hard / 60s easy', home:'DB or bodyweight complex \u2014 3 rounds, minimal rest'};
+function condFor(style, loc){
+  if(style==='weightlifting') return loc==='gym'?COND.gym:COND.home;
+  return 'Jump rope or burpee intervals \u2014 10 min';
+}
+
+const SPLITS = {2:['Full Body A','Full Body B'], 3:['Push','Pull','Legs'], 4:['Upper','Lower','Upper','Lower'],
+  5:['Push','Pull','Legs','Upper','Lower'], 6:['Push','Pull','Legs','Push','Pull','Legs']};
+const TEMPLATE = {
+  'Push':['horiz_push','vert_push','incline_push','triceps','sdelt','core'],
+  'Pull':['vert_pull','horiz_pull','biceps','sdelt','core'],
+  'Legs':['squat','hinge','lunge','calves','core'],
+  'Upper':['horiz_push','horiz_pull','vert_push','vert_pull','biceps','triceps'],
+  'Lower':['squat','hinge','lunge','calves','core'],
+  'Full Body A':['squat','horiz_push','horiz_pull','core','biceps'],
+  'Full Body B':['hinge','vert_push','vert_pull','lunge','triceps'],
+};
+const COUNT = {beginner:4, intermediate:5, advanced:6};
+const GOAL_SCHEME = {
+  lean:{c:{sets:3,reps:'12\u201315',rest:'45\u201360s'}, i:{sets:3,reps:'12\u201315',rest:'45s'}},
+  athletic:{c:{sets:3,reps:'8\u201312',rest:'60\u201390s'}, i:{sets:3,reps:'10\u201312',rest:'60s'}},
+  muscular:{c:{sets:4,reps:'8\u201312',rest:'75\u201390s'}, i:{sets:3,reps:'10\u201315',rest:'60s'}},
+  strong:{c:{sets:5,reps:'3\u20136',rest:'2\u20133 min'}, i:{sets:3,reps:'8\u201310',rest:'90s'}},
+};
+function schemeForStyle(style, goal, isC, mainIdx){
+  if(goal==='maintenance'){
+    if(style==='weightlifting') return isC?{sets:2,reps:'6–10',rest:'90s'}:{sets:2,reps:'10–12',rest:'60s'};
+    if(style==='calisthenics') return isC?{sets:2,reps:'6–8',rest:'75s'}:{sets:2,reps:'8–10',rest:'60s'};
+    return {sets:2,reps:'12–15',rest:'45s'};
+  }
+  if(style==='weightlifting'){
+    if(goal==='strong' && isC) return mainIdx<2?{sets:5,reps:'3\u20136',rest:'2\u20133 min'}:{sets:4,reps:'6\u20138',rest:'2 min'};
+    const s=GOAL_SCHEME[goal]; return isC?s.c:s.i;
+  }
+  if(style==='calisthenics'){
+    if(isC){ const reps = goal==='strong'?'4\u20136':goal==='lean'?'10\u201315':'6\u201310';
+      return {sets: goal==='strong'?5:4, reps, rest:'75\u201390s \u00b7 progress to a harder variation when reps come easily'}; }
+    return {sets:3, reps:'8\u201312', rest:'60s'};
+  }
+  if(isC){ const reps = goal==='strong'?'6\u201310':goal==='lean'?'15\u201320':'12\u201315'; return {sets:3, reps, rest:'45\u201360s'}; }
+  return {sets:3, reps:'15\u201320', rest:'45s'};
+}
+const fmt = s => `${s.sets} \u00d7 ${s.reps}`;
+
+/* ---- mind-body library ---- */
+const MIND_SESSIONS = {
+  pilates:['Powerhouse & Core','Full-Body Mat Flow','Lower Body & Glutes','Back, Posture & Balance','Obliques & Deep Core','Full-Body Control'],
+  yoga:['Sun Salutation Flow','Standing Strength','Hip Openers','Balance & Core','Backbends & Heart','Restorative Wind-Down'],
+};
+const MIND_POOL = {
+  pilates:{
+    'Powerhouse & Core':[['The Hundred','100 pulses (breathe 5\u00d720)'],['Roll-Up','3 \u00d7 8 slow & controlled'],['Single-Leg Stretch','3 \u00d7 10 / side'],['Criss-Cross','3 \u00d7 12'],['Plank Hold','3 \u00d7 30\u201345s']],
+    'Full-Body Mat Flow':[['Roll-Up','2 \u00d7 8'],['Leg Circles','2 \u00d7 8 / side'],['Rolling Like a Ball','2 \u00d7 8'],['Swan','3 \u00d7 8'],['Teaser (progression)','3 \u00d7 6']],
+    'Lower Body & Glutes':[['Bridging','3 \u00d7 12'],['Single-Leg Bridge','3 \u00d7 10 / side'],['Side Kick Series','3 \u00d7 10 / side'],['Clamshell','3 \u00d7 15 / side'],['Standing Leg Pumps','3 \u00d7 15']],
+    'Back, Posture & Balance':[['Swan','3 \u00d7 8'],['Swimming','3 \u00d7 20s'],['Single-Leg Kick','3 \u00d7 10 / side'],['Spine Stretch Forward','3 \u00d7 8'],['Quadruped Balance','3 \u00d7 8 / side']],
+    'Obliques & Deep Core':[['Criss-Cross','3 \u00d7 14'],['Side Plank + Reach','3 \u00d7 8 / side'],['Saw','3 \u00d7 8 / side'],['Corkscrew (modified)','3 \u00d7 6'],['Hollow Hold','3 \u00d7 20\u201330s']],
+    'Full-Body Control':[['The Hundred','100 pulses'],['Teaser','3 \u00d7 6'],['Leg Pull Front','3 \u00d7 8'],['Side Kick Series','2 \u00d7 10 / side'],['Seal / Roll-Up finish','2 \u00d7 8']],
+  },
+  yoga:{
+    'Sun Salutation Flow':[['Sun Salutation A','5 rounds with breath'],['Sun Salutation B','3 rounds'],['Downward Dog','hold 5 breaths'],['Low Lunge','5 breaths / side'],['Forward Fold','hold 5 breaths']],
+    'Standing Strength':[['Warrior II','5 breaths / side'],['Extended Side Angle','5 breaths / side'],['Triangle','5 breaths / side'],['Chair Pose','hold 5 breaths'],['Crescent Lunge','5 breaths / side']],
+    'Hip Openers':[['Low Lunge','6 breaths / side'],['Pigeon','8 breaths / side'],['Lizard','6 breaths / side'],['Garland (Malasana)','hold 6 breaths'],['Bound Angle','8 breaths']],
+    'Balance & Core':[['Tree Pose','5 breaths / side'],['Eagle','5 breaths / side'],['Half Moon','5 breaths / side'],['Boat Pose','3 \u00d7 20\u201330s'],['Plank \u2192 Side Plank','20s each']],
+    'Backbends & Heart':[['Cat\u2013Cow','8 slow rounds'],['Cobra','3 \u00d7 5 breaths'],['Bridge','3 \u00d7 5 breaths'],['Camel (modified)','5 breaths'],['Sphinx','hold 6 breaths']],
+    'Restorative Wind-Down':[['Child\u2019s Pose','hold 8 breaths'],['Seated Forward Fold','hold 8 breaths'],['Supine Twist','6 breaths / side'],['Legs-Up-the-Wall','2\u20133 min'],['Savasana','5 min']],
+  },
+};
+
+/* ---- combat & weapon library ---- */
+const FIGHT_META = {
+  boxing:{app:'Sparring rounds (light, headgear + gloves)', tech:['Jab\u2013cross\u2013hook combos on pads','Slip, roll & counter drills'], shadow:'Shadowboxing', foot:'Boxing footwork ladder', cond:'Heavy-bag intervals'},
+  muaythai:{app:'Clinch work + light sparring (with gear)', tech:['Teep & roundhouse kick drills on pads','Elbow, knee & combination work'], shadow:'Shadow striking', foot:'Switch-step & angling footwork', cond:'Bag & pad round intervals'},
+  bjj:{app:'Positional rolling from set starts', tech:['Guard-passing drills','Sweep & submission chains'], shadow:'Solo movement drills (shrimp, bridge, roll)', foot:'Base, posture & movement drills', cond:'Grip & circuit conditioning'},
+  wrestling:{app:'Live takedown rounds with a partner', tech:['Penetration-step & shot entries','Sprawl, scramble & re-shot drills'], shadow:'Stance & motion drills', foot:'Level-change footwork', cond:'Sprint & grip conditioning'},
+  mma:{app:'Light MMA rounds (full protective gear)', tech:['Strike-into-takedown entries','Ground & transition control drills'], shadow:'Shadow MMA (strikes + level changes)', foot:'Range & stance footwork', cond:'Mixed-round conditioning'},
+  karate:{app:'Controlled point sparring (with gear)', tech:['Kata / form practice','Kihon basics + kumite combinations'], shadow:'Solo technique reps', foot:'Shifting & stance footwork', cond:'Explosive technique intervals'},
+  fencing:{app:'Target drills + light bouting (mask & jacket)', tech:['Blade actions: parry\u2013riposte drills','Distance & timing partner drills'], shadow:'Solo lunge & point-control drills', foot:'Advance\u2013retreat\u2013lunge ladder', cond:'Lunge & agility intervals'},
+  kendo:{app:'Men/kote strike drills + light jigeiko (in bogu)', tech:['Suburi (cutting practice)','Kirikaeshi drills'], shadow:'Solo suburi sets', foot:'Fumikomi (stamp-step) footwork', cond:'Suburi conditioning sets'},
+  hema:{app:'Controlled drills / sparring (mask & padded kit)', tech:['Guards & cutting mechanics','Parry & counter drills from the sources'], shadow:'Solo cutting drills', foot:'Passing-step footwork', cond:'Cutting & grip conditioning'},
+  kali:{app:'Partner flow drills (padded sticks)', tech:['Single-stick angle drills','Sinawali double-stick coordination flows'], shadow:'Solo stick flow drills', foot:'Triangle footwork', cond:'Coordination & grip intervals'},
+  staff:{app:'Form refinement + partner drills (foam/padded)', tech:['Bo staff strikes & spins','Weapon form (kata) practice'], shadow:'Solo form practice', foot:'Stance-shift footwork', cond:'Form-flow conditioning'},
+};
+const FIGHT_ROUNDS = {
+  skill:{tech:5, app:4, cond:6}, conditioning:{tech:3, app:4, cond:10},
+  competition:{tech:4, app:6, cond:8}, maintenance:{tech:3, app:3, cond:4},
+};
+function scAccessory(st, pats){
+  const base = st.location==='gym' ? 'weightlifting' : 'bodyweight';
+  const sets = st.goal==='maintenance' ? 2 : 3;
+  const reps = st.goal==='competition' ? '4\u20136 (power)' : '6\u201310';
+  return pats.map(function(p){ return {name:resolveEx(p, base, st.location), scheme:sets+' \u00d7 '+reps, rest:'Rest 90s\u20132 min'}; });
+}
+function buildCombat(st){
+  const meta = FIGHT_META[st.style]; const isW = STYLE_KIND[st.style]==='weapon';
+  const R = FIGHT_ROUNDS[st.goal] || FIGHT_ROUNDS.skill;
+  const themes = isW
+    ? ['Technique & Forms','Partner Drills & Flow','Footwork & Conditioning','Strength & Mobility','Free Practice','Active Recovery']
+    : ['Technique & Skill','Rounds & Application','Footwork & Conditioning','Strength & Power','Mixed Application','Active Recovery'];
+  const mkTech = function(){ return meta.tech.map(function(t){ return {name:t, scheme:R.tech+' \u00d7 3 min', rest:'Focused, quality reps'}; }); };
+  const mkApp = function(rounds){ return {name:meta.app, scheme:rounds+' \u00d7 '+(isW?'2':'3')+' min', rest:isW?'Controlled flow, reset between':'Light\u2013moderate, reset between rounds'}; };
+  const mkCond = function(){ return {name:meta.cond, scheme:R.cond+' \u00d7 (30s hard / 30s easy)', rest:'Keep form as fatigue builds'}; };
+  const mkFoot = function(){ return {name:meta.foot, scheme:'10 min', rest:'Light, crisp movement'}; };
+  const mkShadow = function(){ return {name:meta.shadow, scheme:'3 \u00d7 3 min', rest:'Visualise the opponent'}; };
+  const mob = {name:'Mobility + breathing cooldown', scheme:'10 min', rest:'Easy, nasal breathing'};
+  const daysArr = Array.from({length:st.days},function(_,i){
+    const theme = themes[i % themes.length]; let blocks=[]; let intensity=3;
+    if(/Technique/.test(theme)){ blocks=mkTech().concat([mkShadow()]); intensity=3; }
+    else if(/Rounds & Application|Partner Drills/.test(theme)){ blocks=[mkApp(R.app), mkTech()[0], mob]; intensity=st.goal==='competition'?5:4; }
+    else if(/Footwork & Conditioning/.test(theme)){ blocks=[mkFoot(), mkCond(), {name:'Core & bracing circuit', scheme:'3 \u00d7 40s', rest:'Rest 30s'}]; intensity=4; }
+    else if(/Strength/.test(theme)){ blocks=scAccessory(st,['squat','hinge','horiz_push']).concat([{name:'Explosive: med-ball throws or jumps', scheme:(st.goal==='maintenance'?'2':'3')+' \u00d7 5', rest:'Full recovery'}]); intensity=st.goal==='maintenance'?2:4; }
+    else if(/Mixed|Free Practice/.test(theme)){ blocks=[mkTech()[0], mkApp(Math.max(2,R.app-1)), mkCond(), mob]; intensity=4; }
+    else { blocks=[{name:'Light technical '+meta.shadow.toLowerCase(), scheme:'2 \u00d7 3 min', rest:'Very easy'}, mob, {name:'Easy walk, cycle or swim', scheme:'20\u201330 min', rest:'Conversational pace'}]; intensity=1; }
+    if(st.goal==='maintenance'){ blocks = blocks.filter(function(b){return !/Explosive|Core & bracing/.test(b.name);}); intensity=Math.min(intensity,3); }
+    return {index:i+1, name:theme, focus:theme, intensity:intensity, blocks:blocks, warmup:WARMUP[st.style]};
+  });
+  const emph = ({skill:'Technical sharpening', conditioning:'Fight conditioning', competition:'Competition peaking', maintenance:'Skill & fitness upkeep'})[st.goal] || 'Skill & conditioning';
+  return wrap(st, isW?'Weapon-art sessions':'Combat sessions', emph, daysArr, progCombat(st,isW), notesCombat(st,isW));
+}
+function progCombat(st,isW){
+  const p=[];
+  if(st.goal==='maintenance') p.push('Upkeep mode: drill technique and footwork to stay sharp, keep sparring light and occasional, and hold your conditioning rather than chasing peaks.');
+  else if(st.goal==='competition') p.push('Build volume and sparring intensity through the block, then taper in the final 1\u20132 weeks \u2014 cut volume, keep sharpness, arrive fresh.');
+  else if(st.goal==='conditioning') p.push('Push the work-rate in conditioning rounds week to week; judge progress by how clean your technique stays as you tire.');
+  else p.push('Grease the groove: high-quality, repeatable reps of each technique beat occasional all-out efforts. Add complexity only once the basics are automatic.');
+  p.push('Progress sparring gradually \u2014 start light and cooperative, and add intensity only as control and defence improve.');
+  p.push('Periodise strength & conditioning around skill work: lift heavier on technique-light days, lighter before hard sparring.');
+  p.push('Recovery is training too \u2014 sleep, mobility and easy days are when skill and conditioning consolidate.');
+  return p;
+}
+function notesCombat(st,isW){
+  const n=[];
+  n.push('Train under a qualified coach at a gym, club, or dojo. Proper technique and supervision are what keep these disciplines safe and effective.');
+  if(isW) n.push('Use appropriate training weapons (foam, padded, or blunt practice implements) and full protective gear, and keep all partner work controlled and cooperative.');
+  else n.push('Use the right protective equipment \u2014 gloves, wraps, mouthguard, headgear, shin guards as your art requires \u2014 and keep sparring consensual and controlled.');
+  n.push('These plans are for skill, fitness, and sport. Always train and spar within the rules of your discipline and with respect for your partners.');
+  n.push('Warm up thoroughly, and treat any joint tweak or head knock seriously \u2014 when in doubt, stop and get it checked.');
+  if(st.location==='home') n.push('At home you can drill footwork, shadow work, forms, bag work and conditioning solo \u2014 save live partner sparring for the gym or club.');
+  return n;
+}
+
+/* ---- build plan (branches by style kind) ---- */
+/* =================== CYCLE SYNC =================== */
+const cycle = { on:false, start:'', length:28 };
+const CYCLE_ORDER = ['menstrual','follicular','ovulatory','luteal'];
+const CYCLE_DISCLAIMER = 'Cycle-syncing here is a flexible, general guide, not a medical protocol. Phase timing is estimated from your start date and an average cycle, everyone differs, and hormonal birth control changes or removes these natural phases. Treat it as a prompt to listen to your body, and check with a doctor for irregular cycles or conditions such as PCOS or endometriosis.';
+const CYCLE_PHASE = {
+  menstrual:{label:'Menstrual', focus:'Recovery & gentle movement', cap:3, calAdj:0,
+    train:['Energy is often lower now \u2014 keep intensity easy and honour how you feel.','Favour mobility, technique, low-impact cardio and lighter sessions; shorten or skip if you need to.','Gentle movement can ease cramps, but rest is completely valid.'],
+    foods:['Iron-rich foods (lean red meat, lentils, tofu, spinach) to replace what is lost','Vitamin C (citrus, capsicum, berries) alongside iron to aid absorption','Anti-inflammatory omega-3s (salmon, walnuts, flax) and plenty of water']},
+  follicular:{label:'Follicular', focus:'Build & progress', cap:5, calAdj:0,
+    train:['Rising energy \u2014 a great window to build volume, add load and chase progress.','Prioritise your hardest strength or skill work here.','You generally recover well, so push the quality sessions.'],
+    foods:['Fresh vegetables and fruit, with lean protein to support harder training','Complex carbs (oats, brown rice, quinoa) to fuel the extra output','Fermented foods (yoghurt, kimchi) for gut health']},
+  ovulatory:{label:'Ovulatory', focus:'Peak output', cap:5, calAdj:0,
+    train:['Strength and power often peak around ovulation \u2014 a good time for heavier efforts or PRs.','Warm up thoroughly: joints can be a little more lax, so control landings and technique.','Enjoy the high, then ease back as you move into the luteal phase.'],
+    foods:['Fibre and antioxidants (berries, leafy greens, cruciferous veg)','Healthy fats (avocado, olive oil, nuts) to support hormones','Keep hydration and protein up around harder sessions']},
+  luteal:{label:'Luteal', focus:'Steady & sustain', cap:4, calAdj:0.05,
+    train:['Energy may gradually dip \u2014 steady, moderate sessions and good technique work well.','Slightly higher body temperature means you may fatigue sooner; extend warm-ups and rest as needed.','Ease off high-intensity work toward the end of this phase and lean into recovery.'],
+    foods:['Your energy needs rise slightly now, so a little more food is normal and healthy','Complex carbs and magnesium (whole grains, nuts, dark chocolate, leafy greens) to steady mood and cravings','Calcium and B-vitamins; balance cravings with protein and fibre, and go easy on excess salt and caffeine']},
+};
+function cycleInfo(){
+  if(!cycle.on || !cycle.start) return null;
+  const L = Math.min(40, Math.max(21, Number(cycle.length)||28));
+  const start = new Date(cycle.start+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.floor((today - start)/86400000);
+  if(isNaN(diff)) return null;
+  const dayOfCycle = (((diff % L)+L)%L) + 1;
+  const ovul = L - 14;
+  let phase;
+  if(dayOfCycle<=5) phase='menstrual';
+  else if(dayOfCycle < ovul-1) phase='follicular';
+  else if(dayOfCycle <= ovul+1) phase='ovulatory';
+  else phase='luteal';
+  const lateLuteal = phase==='luteal' && dayOfCycle >= L-3;
+  const week = Math.min(4, Math.floor((dayOfCycle-1)/(L/4))+1);
+  return {L, dayOfCycle, phase, lateLuteal, week, meta:CYCLE_PHASE[phase]};
+}
+function phaseCap(info){ return info.lateLuteal ? 3 : info.meta.cap; }
+function applyCycle(plan){
+  if(plan.cycle) return plan;
+  const info = cycleInfo(); if(!info) return plan;
+  const cap = phaseCap(info);
+  plan.days.forEach(function(d){ d.intensity = Math.min(d.intensity, cap); });
+  const pointers = info.meta.train.slice();
+  if(info.lateLuteal) pointers.push('You may be in the late-luteal (pre-period) stretch \u2014 if PMS hits, treat it like a deload: lower the volume, keep it light and prioritise sleep.');
+  plan.cycle = {info:info, label:info.meta.label, focus:info.meta.focus, dayOfCycle:info.dayOfCycle, week:info.week, lateLuteal:info.lateLuteal, pointers:pointers, phase:info.phase};
+  return plan;
+}
+function pchips(current){ return CYCLE_ORDER.map(function(p){ return '<span class="pchip'+(p===current?' on':'')+'">'+CYCLE_PHASE[p].label+'</span>'; }).join(''); }
+function cycleBanner(c){
+  return '<div class="cycle"><div class="ctag">Cycle-synced \u00b7 Day '+c.dayOfCycle+' \u00b7 Week '+c.week+'</div>'
+    + '<h3 class="cname">'+c.label+' phase'+(c.lateLuteal?' (late)':'')+' \u00b7 '+c.focus+'</h3>'
+    + '<div class="pbar">'+pchips(c.phase)+'</div>'
+    + '<ul class="cptr">'+c.pointers.map(function(p){return '<li>'+p+'</li>';}).join('')+'</ul></div>';
+}
+function cycleNutriCard(cyc){
+  const m=cyc.meta;
+  return '<div class="cycle"><div class="ctag">Cycle-synced \u00b7 Day '+cyc.dayOfCycle+'</div>'
+    + '<h3 class="cname">'+m.label+' phase'+(cyc.lateLuteal?' (late)':'')+'</h3>'
+    + '<div class="pbar">'+pchips(cyc.phase)+'</div>'
+    + '<div class="cfoods"><div class="fk2">Nutrition focus</div><ul>'+m.foods.map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div></div>';
+}
+function cycleFieldsHTML(idx){
+  const on = cycle.on;
+  const seg = [['off','Off'],['on','On']].map(function(o){ return '<button class="opt cyc-toggle'+(((on?'on':'off')===o[0])?' active':'')+'" data-cyc="'+o[0]+'">'+o[1]+'</button>'; }).join('');
+  const extra = on ? '<div class="numrow" style="margin-top:10px"><div><input class="num cyc-start" type="date" value="'+cycle.start+'"></div><div><input class="num cyc-len" type="number" min="21" max="40" placeholder="Cycle length (days)" value="'+cycle.length+'"></div></div><div class="hint">First day of your last period \u00b7 average cycle length (default 28)</div>' : '';
+  return '<div class="field"><div class="flabel"><span class="n">'+idx+'</span><span class="t">Cycle sync <span style="color:var(--muted);font-weight:400">(optional)</span></span></div><div class="seg">'+seg+'</div>'+extra+'</div>';
+}
+function wireCycle(el){
+  el.querySelectorAll('.cyc-toggle').forEach(function(b){ b.addEventListener('click',function(){ cycle.on = b.dataset.cyc==='on'; saveInputs(); rerenderConsoles(); }); });
+  const st=el.querySelector('.cyc-start'); if(st) st.addEventListener('change',function(){ cycle.start=st.value; saveInputs(); });
+  const ln=el.querySelector('.cyc-len'); if(ln) ln.addEventListener('input',function(){ cycle.length=ln.value; saveInputs(); });
+}
+function rerenderConsoles(){ renderTrainConsole(); renderFuelConsole(); }
+
+const WARMUP = {
+  weightlifting:'5 min easy cardio, then dynamic mobility (leg swings, arm circles, band pull-aparts) and 2–3 lighter ramp-up sets before your first working set of each lift.',
+  calisthenics:'5 min pulse-raiser, wrist & shoulder prep, scapular pull-ups and push-up-to-plank, then a few easy reps of the day’s first skill.',
+  bodyweight:'3–5 min brisk movement (jog on the spot, jumping jacks), then leg swings and arm circles, plus a couple of slow reps of each movement.',
+  pilates:'Pelvic tilts, cat–cow and a few spinal rolls to mobilise the spine and switch on the deep core before the mat work.',
+  yoga:'A few rounds of Cat–Cow, gentle neck and wrist circles, then 2–3 slow Sun Salutations to warm the whole body before deeper poses.',
+  boxing:'Skip or jog 3–5 min, neck & shoulder mobility, then 2 easy rounds of shadowboxing to groove the footwork and combinations.',
+  muaythai:'Skip 3–5 min, hip and ankle mobility, then light shadow striking with teeps and easy kicks to open the hips.',
+  bjj:'Neck circles and spinal mobility, hip escapes (shrimping), bridging, and forward/backward rolls to prime the body for the mat.',
+  wrestling:'Jog and light level-change drills, neck-bridge prep, hip and shoulder mobility, then easy stance-and-motion and penetration steps.',
+  mma:'Skip or jog, full-body dynamic mobility, then light shadow work mixing strikes with level changes.',
+  karate:'Light cardio, joint rotations (ankles, knees, hips, shoulders), then slow kihon reps and a couple of easy kata run-throughs.',
+  fencing:'Advance–retreat footwork ladder, lunges building depth, wrist and shoulder mobility, then slow point-control drills before bouting.',
+  kendo:'Easy-pace suburi, ankle and shoulder mobility, fumikomi stamp-step drills, then a few low-intensity kirikaeshi.',
+  hema:'Shoulder, wrist and thoracic mobility, slow cutting drills through the guards, and light footwork before any drilling.',
+  kali:'Wrist and forearm mobility, slow single-stick angles, and easy sinawali flows to warm the hands and coordination.',
+  staff:'Wrist and shoulder mobility, slow staff spins and strikes, then a relaxed run-through of the form before working at speed.',
+};
+function buildPlan(st){
+  const k=STYLE_KIND[st.style];
+  if(k==='mind') return buildMind(st);
+  if(k==='combat'||k==='weapon') return buildCombat(st);
+  return buildStrength(st);
+}
+function buildStrength(st){
+  const split = SPLITS[st.days]; let count = COUNT[st.level]; if(st.goal==='maintenance') count=Math.max(3,count-1);
+  const useCond = st.goal==='lean' || st.body==='endo';
+  const days = split.map((name,di)=>{
+    const pats = TEMPLATE[name].slice(0,count); let mi=0;
+    const blocks = pats.map(p=>{ const isC=!!EX[p].c; const sc=schemeForStyle(st.style, st.goal, isC, isC?mi++:0);
+      return {name:resolveEx(p, st.style, st.location), scheme:fmt(sc), rest:'Rest '+sc.rest}; });
+    const legDay=/Legs|Lower|Full/.test(name);
+    let intensity=({lean:3,athletic:3,muscular:4,strong:5,maintenance:2}[st.goal])||3; if(legDay) intensity=Math.min(5,intensity+1);
+    const d={index:di+1,name,focus:name,intensity,blocks,warmup:WARMUP[st.style]};
+    if(useCond && di%2===0) d.finisher=condFor(st.style, st.location);
+    return d;
+  });
+  return wrap(st, SPLIT_LABEL[st.days], EMPHASIS[st.goal], days, progStrength(st), notesFor(st));
+}
+function buildMind(st){
+  const themes = MIND_SESSIONS[st.style];
+  const days = Array.from({length:st.days},(_,i)=>{
+    const theme = themes[i % themes.length];
+    const blocks = MIND_POOL[st.style][theme].map(pair=>({name:pair[0], scheme:pair[1], rest: st.style==='yoga'?'Move with the breath':'Slow, controlled tempo'}));
+    const intensity = st.style==='yoga' ? (theme.indexOf('Restorative')>=0?1:3) : 3;
+    return {index:i+1, name:theme, focus:theme, intensity, blocks, warmup:WARMUP[st.style]};
+  });
+  const emph = st.style==='yoga'?'Mobility, balance & breath':'Core control & stability';
+  return wrap(st, 'Themed sessions', emph, days, progMind(st), notesMind(st));
+}
+function wrap(st, split, emphasis, days, progression, notes){
+  return { summary:{ style:STYLE_LABEL[st.style], location:LOC_LABEL[st.location], split, emphasis, days:st.days,
+      level:LEVEL_LABEL[st.level], from:BODY_LABEL[st.body], to:GOAL_LABEL[st.goal] },
+    days, restDays:7-st.days, progression, notes };
+}
+function progStrength(st){
+  const p=[];
+  if(st.goal==='maintenance'){
+    p.push('This is an upkeep plan: hold your strength on low volume rather than chasing new peaks. Keep effort moderate and movements crisp.');
+    p.push('Two solid sessions a week maintains most of your gains — add a third if you have the time and energy.');
+    p.push('When you want to build again, add sets and load gradually rather than all at once.');
+    return p;
+  }
+  if(st.style==='calisthenics'){
+    p.push('Progress by moving to a harder variation of each move \u2014 not just adding reps. When a variation feels easy for all sets, advance to the next.');
+    p.push('Own the full range with control before you make a movement harder.');
+  } else if(st.style==='bodyweight'){
+    p.push('Progress by adding reps, slowing the tempo, shortening rest, or choosing a harder variation once the target reps feel comfortable.');
+  } else if(st.goal==='strong'){
+    p.push('Add a small load to your main lifts each week while you can keep clean reps \u2014 this is your primary driver.');
+    p.push('If you stall twice in a row, hold the weight and rebuild reps before adding load again.');
+  } else {
+    p.push('Add reps within the listed range each session. When you hit the top of the range on every set, add a small load increment and reset to the bottom.');
+    p.push('Keep the last 1\u20132 reps challenging but clean on your compounds.');
+  }
+  p.push('Log every session \u2014 beating last week, even by a rep, is progress.');
+  p.push('Every 4\u20136 weeks, take a lighter deload week: cut volume by about a third. It is part of the plan, not a break from it.');
+  return p;
+}
+function progMind(st){
+  const p=[];
+  if(st.style==='yoga'){
+    p.push('Progress by deepening each pose, holding a breath or two longer, and steadying your balance \u2014 not by rushing.');
+    p.push('Let the breath lead the movement; if a pose strains, ease back to a gentler version.');
+  } else {
+    p.push('Progress by increasing control and range, adding a rep or two, and slowing the tempo before you add harder variations.');
+    p.push('Quality of movement beats quantity \u2014 keep the deep core engaged throughout.');
+  }
+  p.push('Consistency is the real driver here. Two or three focused sessions a week compound quickly.');
+  return p;
+}
+function notesFor(st){
+  const n=[];
+  if(st.body==='ecto') n.push('As an ectomorph, favour the compound movements and take full rest between hard sets. Keep extra cardio light, and prioritise eating enough and sleeping well.');
+  if(st.body==='meso') n.push('Mesomorphs respond quickly to varied training \u2014 rotate rep ranges every few weeks to keep progress steady.');
+  if(st.body==='endo') n.push('The conditioning finishers on some days support your goal. Add easy walking on off days and build meals around protein and whole foods.');
+  n.push('Start each session with 5\u201310 minutes of light movement and warm-up sets before your working effort.');
+  if(st.location==='home') n.push('Training at home: a doorway pull-up bar, a pair of adjustable dumbbells, and a set of bands cover most of these movements.');
+  return n;
+}
+function notesMind(st){
+  const n=[];
+  n.push(st.style==='yoga' ? 'Warm up with a few rounds of Cat\u2013Cow and gentle movement before deeper poses, and finish with a short rest.' : 'Set up on a mat with room to extend your arms and legs; a small cushion or towel helps for seated work.');
+  if(st.location==='gym') n.push('At a gym or studio you may have access to props, a reformer, or led classes \u2014 use them to refine technique.');
+  else n.push('At home, all you really need is a mat and a clear patch of floor.');
+  n.push('Move within a pain-free range and never force a stretch \u2014 depth comes with consistency.');
+  return n;
+}
+
+/* ---- render console + plan ---- */
+function renderTrainConsole(){
+  const el=document.getElementById('trainConsole');
+  const seg=(key,opts,mini)=>opts.map(o=>{ const a=String(train[key])===String(o.v)?' active':'';
+    const cls=(mini?'opt mini':'opt')+a; const sub=o.d?`<small>${o.d}</small>`:'';
+    return `<button class="${cls}" data-key="${key}" data-val="${o.v}">${o.t}${sub}</button>`;}).join('');
+  const catOpts = Object.keys(CATEGORY).map(c=>({v:c,t:CATEGORY_LABEL[c]}));
+  const styleOpts = CATEGORY[train.category].map(s=>({v:s, t:STYLE_OPT[s].t, d:STYLE_OPT[s].d}));
+  const fields = [
+    ['Discipline', seg('category', catOpts)],
+    ['Style', seg('style', styleOpts)],
+    ['Where you train', seg('location', LOC_OPTS)],
+    ['Current body type', seg('body', BODY_OPTS) + `<button type="button" class="quizlink" id="bodyQuizBtn">Not sure? Take the 30-second quiz \u2192</button>`],
+    ['Primary goal', seg('goal', goalOpts(train.style))],
+    ['Days per week', seg('days', DAY_OPTS, true)],
+    ['Experience', seg('level', LEVEL_OPTS)],
+  ];
+  el.innerHTML = fields.map((f,ci)=>`<div class="field${ci===fields.length-1?' last':''}">
+      <div class="flabel"><span class="n">${String(ci+1).padStart(2,'0')}</span><span class="t">${f[0]}</span></div>
+      <div class="seg">${f[1]}</div></div>`).join('') + cycleFieldsHTML('08') + `<button class="build" id="trainBuild">Build my week</button>`;
+  el.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.key, v=b.dataset.val; if(k===undefined) return;
+    if(k==='category'){ train.category=v; train.style=CATEGORY[v][0]; if(!goalValid(train.style,train.goal)) train.goal=defaultGoal(train.style); }
+    else if(k==='style'){ train.style=v; if(!goalValid(v,train.goal)) train.goal=defaultGoal(v); }
+    else if(k==='days'){ train.days=Number(v); }
+    else { train[k]=v; }
+    saveInputs();
+    renderTrainConsole();
+  }));
+  document.getElementById('trainBuild').addEventListener('click', runTrain);
+  const _qb=document.getElementById('bodyQuizBtn'); if(_qb) _qb.addEventListener('click', openBodyQuiz);
+  wireCycle(el);
+}
+function renderPlan(plan){
+  applyCycle(plan);
+  lastBuiltPlan=plan; try{ lastBuiltTrain=JSON.parse(JSON.stringify(train)); }catch(e){ lastBuiltTrain=null; }
+  const out=document.getElementById('trainOut'); const s=plan.summary;
+  let h=`<div class="actbar"><button class="savebtn" id="saveWorkoutBtn">Save workout</button></div><div class="summary"><p class="headline">${s.days}-day ${s.split} \u00b7 ${s.emphasis}</p>
+    <div class="meta"><b>${s.style}</b> \u00b7 <b>${s.location}</b> \u00b7 from <b>${s.from}</b><span class="arrow">\u2192</span><b>${s.to}</b> \u00b7 ${s.level}</div>
+    <div class="stats">
+      <div class="stat"><div class="k">Sessions</div><div class="v">${s.days}<small>/week</small></div></div>
+      <div class="stat"><div class="k">Rest days</div><div class="v">${plan.restDays}</div></div>
+      <div class="stat"><div class="k">Style</div><div class="v">${s.style}</div></div>
+    </div></div>${plan.cycle?cycleBanner(plan.cycle):``}<div class="grid">`;
+  plan.days.forEach((d,i)=>{
+    const dots=Array.from({length:5},(_,k)=>`<span class="dot${k<d.intensity?' on':''}"></span>`).join('');
+    const blocks=d.blocks.map(b=>`<div class="block"><div class="m">${b.name}</div><div class="s">${b.scheme}</div><div class="r">${b.rest}</div></div>`).join('');
+    const fin=d.finisher?`<div class="finisher"><div class="fk">Conditioning finisher</div><div class="fv">${d.finisher}</div></div>`:'';
+    h+=`<div class="day" style="animation-delay:${i*55}ms"><div class="dhead">
+      <div><div class="dtag">DAY ${String(d.index).padStart(2,'0')}</div><h3 class="dname">${d.focus}</h3></div>
+      <div class="dots" title="Intensity ${d.intensity}/5">${dots}</div></div>${d.warmup?`<div class="warmup"><div class="wk">Warm-up</div><div class="wv">${d.warmup}</div></div>`:``}${blocks}${fin}</div>`;
+  });
+  for(let r=0;r<plan.restDays;r++){ const di=plan.days.length+r+1;
+    h+=`<div class="day rest" style="animation-delay:${(plan.days.length+r)*55}ms"><div class="dhead">
+      <div><div class="dtag rtag">DAY ${String(di).padStart(2,'0')}</div><h3 class="dname">Recover</h3></div></div>
+      <div class="rbody">Sleep, gentle movement, mobility. Recovery is where the build actually happens.</div></div>`; }
+  h+=`</div><div class="panel"><h3>How to progress</h3><ol>${plan.progression.map(p=>`<li>${p}</li>`).join('')}</ol></div>`;
+  h+=`<div class="panel"><h3>Notes for you</h3><ul>${plan.notes.map(p=>`<li>${p}</li>`).join('')}</ul></div>`;
+  h+=`<p class="disclaimer">General fitness guidance, not medical advice. Check with a doctor before starting a new program, especially with any injury or health condition. Progress at a pace that feels sustainable \u2014 consistency beats intensity.</p>`;
+  if(plan.cycle) h+=`<p class="disclaimer">${CYCLE_DISCLAIMER}</p>`;
+  out.innerHTML=h; out.scrollIntoView({behavior:'smooth',block:'start'});
+  const _sb=document.getElementById('saveWorkoutBtn'); if(_sb) _sb.addEventListener('click', openSaveDialog);
+}
+function runTrain(){ renderPlan(buildPlan(train)); }
+
+/* =================== FUEL =================== */
+const fuel = { units:'metric', sex:'female', age:'', height:'', weight:'', activity:'moderate', intake:'', goal:'lose' };
+const ACT_FACTOR = {sedentary:1.2,light:1.375,moderate:1.55,active:1.725,very:1.9};
+function bmiCat(b){ return b<18.5?'Underweight':b<25?'Healthy range':b<30?'Overweight':'Obese range'; }
+
+function computeNutrition(f, info){
+  let kg,cm;
+  if(f.units==='imperial'){ kg=f.weight*0.453592; cm=f.height*2.54; } else { kg=+f.weight; cm=+f.height; }
+  const age=+f.age;
+  const sexC = f.sex==='male'?5 : f.sex==='female'?-161 : -78;
+  const bmr = 10*kg + 6.25*cm - 5*age + sexC;
+  const tdee = bmr*ACT_FACTOR[f.activity];
+  const bmi = kg/Math.pow(cm/100,2);
+  let goal=f.goal, factor = goal==='lose'?0.85 : goal==='build'?1.10 : 1.0;
+  let target = tdee*factor; const flags=[];
+  if(bmi<18.5 && goal==='lose'){ goal='maintain'; factor=1.0; target=tdee; flags.push('underweight'); }
+  const floor = f.sex==='male'?1500 : f.sex==='female'?1200 : 1350;
+  if(target<floor){ target=floor; flags.push('floored'); }
+  if(info && info.meta.calAdj){ target=Math.round(target*(1+info.meta.calAdj)); if(target<floor) target=floor; }
+  if(age<18) flags.push('minor');
+  const protG = Math.round((goal==='maintain'?1.6:2.0)*kg);
+  const fatG = Math.round(target*0.25/9);
+  const carbG = Math.max(0, Math.round((target - protG*4 - fatG*9)/4));
+  const pPct=Math.round(protG*4/target*100), fPct=Math.round(fatG*9/target*100), cPct=Math.max(0,100-pPct-fPct);
+  return {cyc:info||null, kg,cm,age,bmr:Math.round(bmr),tdee:Math.round(tdee),target:Math.round(target),
+    bmi:+bmi.toFixed(1),cat:bmiCat(bmi),protG,fatG,carbG,pPct,fPct,cPct,goal,flags,floor};
+}
+
+const MEALS = {
+  Breakfast:[['Greek yogurt bowl','berries, oats, honey & nuts'],['Veggie omelette','3 eggs, spinach, tomato + wholegrain toast'],['Overnight oats','milk, banana, peanut butter & chia'],['Tofu scramble','spinach & mushrooms in a wholegrain wrap']],
+  Lunch:[['Chicken or tofu grain bowl','quinoa, mixed veg, olive oil'],['Salmon or chickpea salad','brown rice, greens, lemon'],['Turkey or lentil wrap','wholegrain, hummus, salad'],['Hearty veg & bean soup','wholegrain roll + side salad']],
+  Dinner:[['Baked salmon or tempeh','sweet potato & roasted veg'],['Stir-fry','chicken or tofu, brown rice, mixed veg'],['Lean beef or bean chilli','brown rice & greens'],['Wholewheat pasta','turkey or lentil bolognese + salad']],
+  Snacks:[['Apple + almonds','a small handful'],['Cottage cheese + fruit',''],['Hummus + veg sticks','wholegrain crackers'],['Protein smoothie','milk, banana, berries']],
+};
+const SLOT_SHARE = {Breakfast:.25, Lunch:.30, Dinner:.30, Snacks:.15};
+function buildMeals(target){
+  return Object.keys(SLOT_SHARE).map((slot,i)=>{
+    const kcal=Math.round(target*SLOT_SHARE[slot]/10)*10;
+    const opts=[MEALS[slot][i%MEALS[slot].length], MEALS[slot][(i+2)%MEALS[slot].length]];
+    return {slot,kcal,opts};
+  });
+}
+function fuelTips(n){
+  return [`Build most meals around a palm or two of protein, plenty of vegetables, some whole-grain carbs, and a little healthy fat.`,
+    `Aim for roughly ${n.protG}g of protein spread across the day \u2014 it protects muscle and keeps you full.`,
+    `Drink water regularly, and treat these as flexible templates: swap in foods you enjoy and adjust portions to hit the targets.`,
+    `Judge progress over 2\u20133 weeks, not day to day. If energy, sleep, or mood dip, eat a little more.`];
+}
+
+function renderFuelConsole(){
+  const el=document.getElementById('fuelConsole');
+  const seg=(key,opts,mini)=>opts.map(o=>{ const a=String(fuel[key])===String(o.v)?' active':'';
+    return `<button class="opt${mini?' mini':''}${a}" data-fkey="${key}" data-val="${o.v}">${o.t}${o.d?`<small>${o.d}</small>`:''}</button>`;}).join('');
+  const hLabel = fuel.units==='metric'?'Height (cm)':'Height (in)';
+  const wLabel = fuel.units==='metric'?'Weight (kg)':'Weight (lb)';
+  el.innerHTML = `
+    <div class="field"><div class="flabel"><span class="n">01</span><span class="t">Units</span></div>
+      <div class="seg">${seg('units',[{v:'metric',t:'Metric (kg/cm)'},{v:'imperial',t:'Imperial (lb/in)'}])}</div></div>
+    <div class="field"><div class="flabel"><span class="n">02</span><span class="t">Sex (for metabolic calc)</span></div>
+      <div class="seg">${seg('sex',[{v:'female',t:'Female'},{v:'male',t:'Male'},{v:'na',t:'Prefer not to say'}])}</div></div>
+    <div class="field"><div class="flabel"><span class="n">03</span><span class="t">Age, height &amp; weight</span></div>
+      <div class="numrow">
+        <div><input class="num" id="f_age" type="number" min="14" max="100" placeholder="Age" value="${fuel.age}"></div>
+        <div><input class="num" id="f_height" type="number" min="0" placeholder="${hLabel}" value="${fuel.height}"></div>
+        <div><input class="num" id="f_weight" type="number" min="0" placeholder="${wLabel}" value="${fuel.weight}"></div>
+      </div><div class="hint">${hLabel} \u00b7 ${wLabel}</div></div>
+    <div class="field"><div class="flabel"><span class="n">04</span><span class="t">Activity level</span></div>
+      <div class="seg">${seg('activity',[{v:'sedentary',t:'Sedentary'},{v:'light',t:'Light'},{v:'moderate',t:'Moderate'},{v:'active',t:'Active'},{v:'very',t:'Very active'}])}</div></div>
+    <div class="field"><div class="flabel"><span class="n">05</span><span class="t">Current daily intake <span style="color:var(--muted);font-weight:400">(optional)</span></span></div>
+      <div><input class="num" id="f_intake" type="number" min="0" placeholder="e.g. 2200 kcal" value="${fuel.intake}"></div></div>
+    <div class="field last"><div class="flabel"><span class="n">06</span><span class="t">Goal</span></div>
+      <div class="seg">${seg('goal',[{v:'lose',t:'Lose fat'},{v:'maintain',t:'Maintain'},{v:'build',t:'Build muscle'}])}</div></div>
+    ${cycleFieldsHTML('07')}
+    <button class="build" id="fuelBuild">Build my plan</button>
+    <div class="inputerr hidden" id="fuelErr"></div>`;
+  el.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    if(!b.dataset.fkey) return; fuel[b.dataset.fkey]=b.dataset.val; if(b.dataset.fkey==='units') syncFuelInputs(); saveInputs(); renderFuelConsole(); }));
+  ['age','height','weight','intake'].forEach(k=>{ const inp=document.getElementById('f_'+k);
+    if(inp) inp.addEventListener('input',()=>{ fuel[k]=inp.value; saveInputs(); }); });
+  document.getElementById('fuelBuild').addEventListener('click', runFuel);
+  wireCycle(el);
+}
+function syncFuelInputs(){ ['age','height','weight','intake'].forEach(k=>{ const inp=document.getElementById('f_'+k); if(inp) fuel[k]=inp.value; }); }
+
+function renderFuelPlan(n){
+  const out=document.getElementById('fuelOut');
+  const meals=buildMeals(n.target);
+  const goalTxt = n.goal==='lose'?'a sustainable fat-loss target':n.goal==='build'?'a lean-gain target':'a maintenance target';
+  let h=`<div class="summary">
+    <div class="meta">Daily target \u00b7 ${goalTxt}</div>
+    <div class="bignum"><span class="kcal">${n.target}</span><span class="u">kcal / day</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Est. maintenance</div><div class="v">${n.tdee}<small>kcal</small></div></div>
+      <div class="stat"><div class="k">BMR</div><div class="v">${n.bmr}<small>kcal</small></div></div>
+      <div class="stat"><div class="k">BMI</div><div class="v">${n.bmi}<small>${n.cat}</small></div></div>
+    </div>
+    <div class="macros">
+      <div class="macro"><div class="mk">Protein</div><div class="mv">${n.protG}g</div><div class="mp">${n.pPct}%</div><div class="mbar"><i style="width:${n.pPct}%"></i></div></div>
+      <div class="macro"><div class="mk">Carbs</div><div class="mv">${n.carbG}g</div><div class="mp">${n.cPct}%</div><div class="mbar"><i style="width:${n.cPct}%"></i></div></div>
+      <div class="macro"><div class="mk">Fat</div><div class="mv">${n.fatG}g</div><div class="mp">${n.fPct}%</div><div class="mbar"><i style="width:${n.fPct}%"></i></div></div>
+    </div></div>`;
+  if(n.cyc) h+=cycleNutriCard(n.cyc);
+  if(n.flags.indexOf('underweight')>=0) h+=`<div class="caution"><h4>Set to maintenance, not a deficit</h4><p>Your BMI is in the underweight range, so this plan holds at maintenance rather than cutting calories. If you want to change your weight, please do it with a doctor or registered dietitian who can support you safely.</p></div>`;
+  if(n.flags.indexOf('floored')>=0) h+=`<div class="caution"><h4>Held at a safe minimum</h4><p>This plan won't drop below ${n.floor} kcal. Eating too little tends to backfire on energy, muscle and metabolism \u2014 for a faster change, work with a professional rather than cutting further.</p></div>`;
+  if(n.flags.indexOf('minor')>=0) h+=`<div class="caution"><h4>Built for adults</h4><p>If you're under 18, your needs are different while you're still growing. Please involve a parent or guardian and your doctor before changing how you eat.</p></div>`;
+  if(fuel.intake && Math.abs(+fuel.intake - n.target) > 500) h+=`<div class="caution"><h4>Ease into it</h4><p>Your target is a fair way from your current intake (~${fuel.intake} kcal). Shift gradually over a couple of weeks rather than all at once \u2014 it's easier to sustain.</p></div>`;
+
+  h+=`<div class="panel"><h3>A sample day</h3>`;
+  meals.forEach(m=>{ const optsHtml=m.opts.map(o=>`<div class="opt2"><b>${o[0]}</b>${o[1]?` <span>\u2014 ${o[1]}</span>`:''}</div>`).join('');
+    h+=`<div class="meal"><div class="slot"><span class="sname">${m.slot}</span><span class="scal">aim ~${m.kcal} kcal</span></div>${optsHtml}</div>`; });
+  h+=`</div>`;
+  h+=`<div class="panel"><h3>How to use this</h3><ul>${fuelTips(n).map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
+  h+=`<p class="disclaimer">General educational estimates from the Mifflin-St Jeor equation, not personalised medical or dietary advice. Everyone's needs differ. Please speak with a doctor or registered dietitian before making significant changes \u2014 especially if you are pregnant, have a medical condition, or have any history of disordered eating. A dietitian can tailor this properly to you.</p>`;
+  if(n.cyc) h+=`<p class="disclaimer">${CYCLE_DISCLAIMER}</p>`;
+  out.innerHTML=h; out.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function validateFuel(){ syncFuelInputs();
+  const a=+fuel.age,hgt=+fuel.height,w=+fuel.weight;
+  if(!a||!hgt||!w||a<14||a>100||hgt<=0||w<=0) return 'Please enter a valid age, height and weight to build your plan.';
+  return '';
+}
+function runFuel(){ const err=validateFuel(); const errEl=document.getElementById('fuelErr');
+  if(err){ errEl.textContent=err; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden'); renderFuelPlan(computeNutrition(fuel, cycleInfo())); }
+
+/* init */
+/* =================== BODY-TYPE QUIZ =================== */
+const BODY_QUIZ = [
+  {q:'Your natural frame / bone structure', opts:[['ecto','Fine-boned and narrow — slim wrists and ankles'],['meso','Medium and sturdy'],['endo','Broad and solid — larger joints']]},
+  {q:'How easily do you gain muscle or size?', opts:[['ecto','Slowly — it is hard to add size'],['meso','Quite easily — I respond fast to training'],['endo','Readily — size comes on without much effort']]},
+  {q:'Your overall build', opts:[['ecto','Lean and linear, fairly straight up and down'],['meso','Athletic — broader shoulders, narrower waist'],['endo','Softer and rounder, carrying more through the middle']]},
+  {q:'Appetite and metabolism', opts:[['ecto','Fast — I can eat plenty with little change'],['meso','Balanced — steady when I stay active'],['endo','I gain weight easily unless I stay active']]},
+  {q:'If you eased off training for a while, you would…', opts:[['ecto','Stay lean, maybe lose some muscle'],['meso','Hold your shape fairly well'],['endo','Soften up fairly quickly']]},
+];
+const BODY_RESULT = {
+  ecto:{name:'Ectomorph-leaning', text:'naturally lean with a lighter frame, and adding size can take patience. Your plans lean on compound lifts, full rest, and eating well to support growth.'},
+  meso:{name:'Mesomorph-leaning', text:'someone who tends to build muscle and respond to training readily. Your plans can push varied, progressive work — you will usually see change fairly quickly.'},
+  endo:{name:'Endomorph-leaning', text:'a sturdier frame that gains readily. You will do well with a mix of strength and regular conditioning, and meals built around protein and whole foods.'},
+};
+let quizAnswers = {};
+function quizRoot(){ let r=document.getElementById('modalRoot'); if(!r){ r=document.createElement('div'); r.id='modalRoot'; document.body.appendChild(r); } return r; }
+function openBodyQuiz(){ quizAnswers = {}; renderQuiz(); }
+function closeQuiz(){ const r=document.getElementById('modalRoot'); if(r) r.innerHTML=''; }
+function computeQuizResult(){
+  const tally={ecto:0,meso:0,endo:0};
+  Object.keys(quizAnswers).forEach(function(k){ tally[quizAnswers[k]]++; });
+  const order=Object.keys(tally).sort(function(a,b){ return tally[b]-tally[a]; });
+  const type=order[0];
+  const blend = (tally[order[1]]>=tally[order[0]]-1 && tally[order[1]]>=2) ? order[1] : null;
+  return {type:type, blend:blend};
+}
+function renderQuiz(result){
+  const r=quizRoot();
+  let inner;
+  if(result){
+    const res=BODY_RESULT[result.type];
+    const blend = result.blend ? ' You also show strong '+BODY_RESULT[result.blend].name.replace('-leaning','')+' traits, so you are likely a blend.' : '';
+    inner = '<div class="qzhead"><h2>'+res.name+'</h2><button class="qzx" id="qzClose">\u00d7</button></div>'
+      + '<p class="qzres">You are '+res.text+blend+'</p>'
+      + '<p class="qznote">Somatotypes are a rough, old framework and most people are a blend — treat this as a helpful starting point, not a limit. Your goal, effort and consistency matter far more than your type.</p>'
+      + '<div class="qzbtns"><button class="build qzapply" data-type="'+result.type+'">Use this for my plan</button>'
+      + '<button class="qzsecondary" id="qzRetake">Retake</button></div>';
+  } else {
+    const qs = BODY_QUIZ.map(function(q,i){ return '<div class="qzq"><div class="qzql">'+(i+1)+'. '+q.q+'</div>'
+      + '<div class="qzopts">'+q.opts.map(function(o){ return '<button class="opt qzopt'+(quizAnswers[i]===o[0]?' active':'')+'" data-qi="'+i+'" data-val="'+o[0]+'">'+o[1]+'</button>'; }).join('')+'</div></div>'; }).join('');
+    const ready = Object.keys(quizAnswers).length===BODY_QUIZ.length;
+    inner = '<div class="qzhead"><h2>Find your body type</h2><button class="qzx" id="qzClose">\u00d7</button></div>'
+      + '<p class="qzintro">Answer a few quick questions about your natural build. There are no right answers — pick what fits you most.</p>'
+      + qs
+      + '<div class="qzbtns"><button class="build" id="qzSee"'+(ready?'':' disabled')+'>See my result</button></div>';
+  }
+  r.innerHTML = '<div class="modal-bg" id="qzBg"><div class="modal">'+inner+'</div></div>';
+  const bg=document.getElementById('qzBg'); bg.addEventListener('click',function(e){ if(e.target===bg) closeQuiz(); });
+  const x=document.getElementById('qzClose'); if(x) x.addEventListener('click', closeQuiz);
+  r.querySelectorAll('.qzopt').forEach(function(b){ b.addEventListener('click',function(){ quizAnswers[+b.dataset.qi]=b.dataset.val; renderQuiz(); }); });
+  const see=document.getElementById('qzSee'); if(see) see.addEventListener('click',function(){ if(Object.keys(quizAnswers).length===BODY_QUIZ.length) renderQuiz(computeQuizResult()); });
+  const rt=document.getElementById('qzRetake'); if(rt) rt.addEventListener('click',function(){ quizAnswers={}; renderQuiz(); });
+  const ap=r.querySelector('.qzapply'); if(ap) ap.addEventListener('click',function(){ train.body=ap.dataset.type; closeQuiz(); renderTrainConsole(); });
+}
+
+/* =================== SAVE / ON-DEVICE STORAGE =================== */
+const Store = (function(){
+  let mem={}, ok=false;
+  try{ const k='__forge_t'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); ok=true; }catch(e){ ok=false; }
+  return { ok:ok,
+    get:function(k){ try{ return ok?window.localStorage.getItem(k):(k in mem?mem[k]:null); }catch(e){ return (k in mem?mem[k]:null); } },
+    set:function(k,v){ try{ if(ok) window.localStorage.setItem(k,v); else mem[k]=v; }catch(e){ mem[k]=v; } },
+    del:function(k){ try{ if(ok) window.localStorage.removeItem(k); else delete mem[k]; }catch(e){ delete mem[k]; } } };
+})();
+let lastBuiltPlan=null, lastBuiltTrain=null;
+function saveInputs(){ try{ Store.set('forge:inputs', JSON.stringify({train:train, fuel:fuel, cycle:cycle})); }catch(e){} }
+function loadInputs(){ try{ const raw=Store.get('forge:inputs'); if(!raw) return; const o=JSON.parse(raw);
+  if(o.train) Object.assign(train,o.train); if(o.fuel) Object.assign(fuel,o.fuel); if(o.cycle) Object.assign(cycle,o.cycle); }catch(e){} }
+function getWorkouts(){ try{ return JSON.parse(Store.get('forge:workouts')||'[]'); }catch(e){ return []; } }
+function setWorkouts(a){ try{ Store.set('forge:workouts', JSON.stringify(a)); }catch(e){} }
+function saveWorkout(name){ if(!lastBuiltPlan) return; const a=getWorkouts();
+  a.unshift({ id:String(Date.now())+String(Math.floor(Math.random()*1000)), name:name||'Untitled', ts:Date.now(),
+    plan:lastBuiltPlan, train:lastBuiltTrain, line:lastBuiltPlan.summary.days+'-day '+lastBuiltPlan.summary.split+' \u00b7 '+lastBuiltPlan.summary.style });
+  setWorkouts(a); }
+function deleteWorkout(id){ setWorkouts(getWorkouts().filter(function(w){return w.id!==id;})); renderSaved(); }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ t.classList.add('show'); },10); setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); },300); },2200); }
+function openSaveDialog(){
+  if(!lastBuiltPlan) return;
+  const suggested = lastBuiltPlan.summary.days+'-day '+lastBuiltPlan.summary.style;
+  const r=quizRoot();
+  r.innerHTML = '<div class="modal-bg" id="svBg"><div class="modal">'
+    + '<div class="qzhead"><h2>Save workout</h2><button class="qzx" id="svClose">\u00d7</button></div>'
+    + '<p class="qzintro">Name it so you can reload it later. Saved only on this device.</p>'
+    + '<input class="num" id="svName" type="text" style="width:100%" value="'+suggested.replace(/"/g,'&quot;')+'">'
+    + (Store.ok?'':'<p class="qznote">Heads up: this preview cannot save to disk, so it only lasts this session. Once the app is hosted, saves stick on your device.</p>')
+    + '<div class="qzbtns"><button class="build" id="svSave">Save</button><button class="qzsecondary" id="svCancel">Cancel</button></div>'
+    + '</div></div>';
+  const bg=document.getElementById('svBg'); bg.addEventListener('click',function(e){ if(e.target===bg) closeQuiz(); });
+  document.getElementById('svClose').addEventListener('click', closeQuiz);
+  document.getElementById('svCancel').addEventListener('click', closeQuiz);
+  document.getElementById('svSave').addEventListener('click', function(){
+    const nm=(document.getElementById('svName').value||'').trim()||suggested;
+    saveWorkout(nm); closeQuiz(); toast('Workout saved'); });
+}
+function loadWorkout(id){ const w=getWorkouts().filter(function(x){return x.id===id;})[0]; if(!w) return;
+  if(w.train){ try{ Object.assign(train, w.train); }catch(e){} }
+  saveInputs(); renderTrainConsole(); showPage('train'); renderPlan(w.plan); }
+function renderSaved(){
+  const el=document.getElementById('savedOut'); if(!el) return;
+  const a=getWorkouts();
+  if(!a.length){ el.innerHTML='<div class="empty"><div class="big">No saved workouts yet.</div><p style="margin-top:8px; color:var(--muted)">Build a week on the Train tab, then tap \u201cSave workout\u201d.</p></div>'; return; }
+  el.innerHTML = a.map(function(w){ const ds=new Date(w.ts).toLocaleDateString();
+    return '<div class="saved"><div class="svinfo"><div class="svname">'+w.name+'</div><div class="svline">'+w.line+' \u00b7 '+ds+'</div></div>'
+      + '<div class="svact"><button class="svload" data-id="'+w.id+'">Load</button><button class="svdel" data-id="'+w.id+'">Delete</button></div></div>'; }).join('')
+    + (Store.ok?'':'<p class="disclaimer">This preview cannot persist saves between sessions. Once hosted, your saved workouts stay on your device.</p>');
+  el.querySelectorAll('.svload').forEach(function(b){ b.addEventListener('click',function(){ loadWorkout(b.dataset.id); }); });
+  el.querySelectorAll('.svdel').forEach(function(b){ b.addEventListener('click',function(){ deleteWorkout(b.dataset.id); }); });
+}
+
+loadInputs();
+renderTrainConsole();
+renderFuelConsole();
+</script>
+
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); }); }
+</script>
