@@ -1,5 +1,5 @@
 /* Bump CACHE (e.g. forge-v2) whenever you change icons or the manifest. */
-const CACHE = 'forge-v1';
+const CACHE = 'forge-v3';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 self.addEventListener('install', function(e){

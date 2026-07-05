@@ -166,6 +166,10 @@
   .svload:hover{border-color:var(--accent); color:var(--accent)} .svdel:hover{border-color:var(--warn); color:var(--warn)}
   .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--accent-ink); font-weight:800; font-size:14px; padding:12px 22px; border-radius:12px; opacity:0; transition:opacity .3s, transform .3s; z-index:80}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .kwgt{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-top:4px}
+  .kwgt > div{background:var(--surface2); border:1px solid var(--line); border-radius:10px; padding:12px}
+  .kwgt span{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+  .kwgt b{font-size:18px; font-weight:800; margin-top:2px; display:block}
   .hidden{display:none}
   @media (prefers-reduced-motion:reduce){.day{animation:none; opacity:1; transform:none} .loading .bar i{animation:none; width:100%}}
   @media (max-width:520px){.macros{grid-template-columns:1fr} .numrow{flex-direction:column} .tabs{margin-left:0} nav{gap:12px}}
@@ -664,8 +668,10 @@ function renderPlan(plan){
   h+=`<div class="panel"><h3>Notes for you</h3><ul>${plan.notes.map(p=>`<li>${p}</li>`).join('')}</ul></div>`;
   h+=`<p class="disclaimer">General fitness guidance, not medical advice. Check with a doctor before starting a new program, especially with any injury or health condition. Progress at a pace that feels sustainable \u2014 consistency beats intensity.</p>`;
   if(plan.cycle) h+=`<p class="disclaimer">${CYCLE_DISCLAIMER}</p>`;
+  h+=kwgtTrainPanel(plan);
   out.innerHTML=h; out.scrollIntoView({behavior:'smooth',block:'start'});
   const _sb=document.getElementById('saveWorkoutBtn'); if(_sb) _sb.addEventListener('click', openSaveDialog);
+  const _kt=document.getElementById('kwgtTrainCopy'); if(_kt) _kt.addEventListener('click', function(){ kwgtTrainCopy(plan); });
 }
 function runTrain(){ renderPlan(buildPlan(train)); }
 
@@ -704,6 +710,66 @@ const MEALS = {
   Snacks:[['Apple + almonds','a small handful'],['Cottage cheese + fruit',''],['Hummus + veg sticks','wholegrain crackers'],['Protein smoothie','milk, banana, berries']],
 };
 const SLOT_SHARE = {Breakfast:.25, Lunch:.30, Dinner:.30, Snacks:.15};
+function kwgtTrainLine(plan){
+  var slots=[];
+  plan.days.forEach(function(d){ slots.push([d.focus, d.intensity]); });
+  for(var r=0;r<plan.restDays;r++) slots.push(['Recover',0]);
+  while(slots.length<7) slots.push(['Recover',0]);
+  slots=slots.slice(0,7);
+  var parts=slots.map(function(s,i){ return 's'+(i+1)+'='+s[0]+'; i'+(i+1)+'='+s[1]; });
+  var phase = plan.cycle ? plan.cycle.label : '';
+  return parts.join('; ')+'; style='+plan.summary.style+'; days='+plan.summary.days+'; phase='+phase+'; today=1';
+}
+function kwgtTrainPanel(plan){
+  return '<div class="panel"><h3>Export for KWGT</h3>'
+    + '<p class="hint" style="margin:0 0 12px">Copies your whole week (7 day slots + intensities), plus style and phase, as one line for your KWGT globals or a Tasker task.</p>'
+    + '<div class="kwgt">'
+    + '<div><span>days</span><b>'+plan.summary.days+'</b></div>'
+    + '<div><span>style</span><b>'+plan.summary.style+'</b></div>'
+    + '<div><span>phase</span><b>'+(plan.cycle?plan.cycle.label:'\u2014')+'</b></div>'
+    + '</div>'
+    + '<button class="savebtn" id="kwgtTrainCopy" style="margin-top:14px">Copy week for KWGT / Tasker</button>'
+    + '<p class="hint" style="margin-top:10px">See the Forge training-widget guide for the layer formulas.</p>'
+    + '</div>';
+}
+function kwgtTrainCopy(plan){
+  var line=kwgtTrainLine(plan);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(line).then(function(){ toast('Copied week for KWGT'); }, function(){ kwgtFallback(line); }); }
+    else kwgtFallback(line);
+  }catch(e){ kwgtFallback(line); }
+}
+
+function kwgtLine(n){
+  const phase = (n.cyc && n.cyc.meta) ? n.cyc.meta.label : '';
+  return 'target='+n.target+'; protein='+n.protG+'; carbs='+n.carbG+'; fat='+n.fatG+'; phase='+phase;
+}
+function kwgtPanel(n){
+  const phase = (n.cyc && n.cyc.meta) ? n.cyc.meta.label : '\u2014';
+  return '<div class="panel"><h3>Export for KWGT</h3>'
+    + '<div class="kwgt">'
+    + '<div><span>target</span><b>'+n.target+'</b></div>'
+    + '<div><span>protein</span><b>'+n.protG+' g</b></div>'
+    + '<div><span>carbs</span><b>'+n.carbG+' g</b></div>'
+    + '<div><span>fat</span><b>'+n.fatG+' g</b></div>'
+    + '<div><span>phase</span><b>'+phase+'</b></div>'
+    + '</div>'
+    + '<button class="savebtn" id="kwgtCopy" style="margin-top:14px">Copy for KWGT / Tasker</button>'
+    + '<p class="hint" style="margin-top:10px">Enter these into your KWGT globals, or paste the copied line into a Tasker \u201cSend Variable\u201d task. See the Forge KWGT widget guide.</p>'
+    + '</div>';
+}
+function kwgtFallback(line){
+  try{ const ta=document.createElement('textarea'); ta.value=line; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied for KWGT'); }
+  catch(e){ toast('Copy unavailable \u2014 select manually'); }
+}
+function kwgtCopy(n){
+  const line=kwgtLine(n);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(line).then(function(){ toast('Copied for KWGT'); }, function(){ kwgtFallback(line); }); }
+    else kwgtFallback(line);
+  }catch(e){ kwgtFallback(line); }
+}
+
 function buildMeals(target){
   return Object.keys(SLOT_SHARE).map((slot,i)=>{
     const kcal=Math.round(target*SLOT_SHARE[slot]/10)*10;
@@ -783,7 +849,9 @@ function renderFuelPlan(n){
   h+=`<div class="panel"><h3>How to use this</h3><ul>${fuelTips(n).map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
   h+=`<p class="disclaimer">General educational estimates from the Mifflin-St Jeor equation, not personalised medical or dietary advice. Everyone's needs differ. Please speak with a doctor or registered dietitian before making significant changes \u2014 especially if you are pregnant, have a medical condition, or have any history of disordered eating. A dietitian can tailor this properly to you.</p>`;
   if(n.cyc) h+=`<p class="disclaimer">${CYCLE_DISCLAIMER}</p>`;
+  h+=kwgtPanel(n);
   out.innerHTML=h; out.scrollIntoView({behavior:'smooth',block:'start'});
+  const _kc=document.getElementById('kwgtCopy'); if(_kc) _kc.addEventListener('click', function(){ kwgtCopy(n); });
 }
 function validateFuel(){ syncFuelInputs();
   const a=+fuel.age,hgt=+fuel.height,w=+fuel.weight;
