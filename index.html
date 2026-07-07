@@ -89,6 +89,18 @@
   .block{display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:9px 0; border-top:1px solid var(--line)}
   .block .m{font-size:14px; font-weight:600} .block .s{font-family:var(--mono); font-size:12px; color:var(--accent); text-align:right; white-space:nowrap}
   .block .r{grid-column:1/-1; font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .block .bd{grid-column:1/-1; font-size:12.5px; line-height:1.45; color:#c2c7d0; margin-top:4px}
+  .exmore{grid-column:1/-1; justify-self:start; margin-top:8px; background:none; border:1px solid var(--line); color:var(--accent); font-family:var(--mono); font-size:11px; letter-spacing:.04em; padding:5px 10px; border-radius:8px; cursor:pointer}
+  .exmore:hover{border-color:var(--accent)}
+  .exdetail{grid-column:1/-1; margin-top:10px}
+  .exwrap{display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; background:var(--surface2); border:1px solid var(--line); border-radius:10px; padding:12px}
+  .mmap{width:180px; height:auto; flex:0 0 auto}
+  .figsvg{width:172px; height:auto; flex:0 0 auto}
+  .exinfo{flex:1 1 170px; min-width:150px}
+  .extar{font-family:var(--mono); font-size:12px; color:var(--text); margin-bottom:8px}
+  .extar span{color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:10px; display:block; margin-bottom:3px}
+  .exsteps{margin:0; padding-left:18px; color:#c2c7d0; font-size:12.5px; line-height:1.5}
+  .exsteps li{margin:3px 0}
   .finisher{margin-top:12px; padding:10px 12px; border-radius:9px; background:rgba(246,179,61,.09); border:1px solid rgba(246,179,61,.25)}
   .warmup{margin:0 0 12px; padding:10px 12px; border-radius:9px; background:rgba(95,168,184,.10); border:1px solid rgba(95,168,184,.28)}
   .warmup .wk{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--cool); text-transform:uppercase}
@@ -374,7 +386,7 @@ function scAccessory(st, pats){
   const base = st.location==='gym' ? 'weightlifting' : 'bodyweight';
   const sets = st.goal==='maintenance' ? 2 : 3;
   const reps = st.goal==='competition' ? '4\u20136 (power)' : '6\u201310';
-  return pats.map(function(p){ return {name:resolveEx(p, base, st.location), scheme:sets+' \u00d7 '+reps, rest:'Rest 90s\u20132 min'}; });
+  return pats.map(function(p){ return {name:resolveEx(p, base, st.location), scheme:sets+' \u00d7 '+reps, rest:'Rest 90s\u20132 min', pat:p, desc:PAT_DESC[p]||''}; });
 }
 function buildCombat(st){
   const meta = FIGHT_META[st.style]; const isW = STYLE_KIND[st.style]==='weapon';
@@ -399,6 +411,7 @@ function buildCombat(st){
     if(st.goal==='maintenance'){ blocks = blocks.filter(function(b){return !/Explosive|Core & bracing/.test(b.name);}); intensity=Math.min(intensity,3); }
     return {index:i+1, name:theme, focus:theme, intensity:intensity, blocks:blocks, warmup:WARMUP[st.style]};
   });
+  daysArr.forEach(function(d){ (d.blocks||[]).forEach(function(b){ if(!b.desc) b.desc=combatDescFor(b.name); if(!b.pat) b.shape=combatShapeFor(b.name, st.style, isW); }); });
   const emph = ({skill:'Technical sharpening', conditioning:'Fight conditioning', competition:'Competition peaking', maintenance:'Skill & fitness upkeep'})[st.goal] || 'Skill & conditioning';
   return wrap(st, isW?'Weapon-art sessions':'Combat sessions', emph, daysArr, progCombat(st,isW), notesCombat(st,isW));
 }
@@ -523,13 +536,97 @@ function buildPlan(st){
   if(k==='combat'||k==='weapon') return buildCombat(st);
   return buildStrength(st);
 }
+const PAT_DESC = {
+  horiz_push:'Horizontal press for chest, front delts and triceps \u2014 lower under control, press to a full lockout.',
+  incline_push:'Upper-chest and shoulder press on an incline \u2014 keep the ribs down and press up and slightly back.',
+  vert_push:'Overhead press for shoulders and triceps \u2014 brace the core and press straight up without leaning back.',
+  horiz_pull:'Row for the mid-back, lats and rear delts \u2014 pull to the torso, squeeze the shoulder blades, control the return.',
+  vert_pull:'Vertical pull for the lats and upper back \u2014 drive the elbows down and in with a full stretch at the top.',
+  squat:'Knee-dominant leg drive for quads and glutes \u2014 sit between the hips and drive up through mid-foot.',
+  hinge:'Hip hinge for hamstrings and glutes \u2014 push the hips back with a flat back, then drive them through.',
+  lunge:'Single-leg strength and balance for quads and glutes \u2014 drop the back knee, then push back up tall.',
+  biceps:'Elbow flexion for the biceps \u2014 curl under control with no swinging, full squeeze and stretch.',
+  triceps:'Elbow extension for the triceps \u2014 keep the elbows steady and extend to a full lockout.',
+  sdelt:'Side-delt raise for shoulder width \u2014 lead with the elbows to shoulder height, then lower slowly.',
+  calves:'Calf raise for the lower legs \u2014 rise fully onto the toes, pause, then lower for a deep stretch.',
+  core:'Trunk work for a braced, stable midsection \u2014 move slowly and keep tension through the abs.'
+};
+const MIND_DESC = {
+  'The Hundred':'Pump the arms and breathe rhythmically while holding a strong hollow.',
+  'Roll-Up':'Peel the spine off the mat one vertebra at a time, then lower with control.',
+  'Single-Leg Stretch':'Draw one knee in as the other leg extends, keeping the core braced.',
+  'Criss-Cross':'Rotate elbow toward the opposite knee, cycling the legs with control.',
+  'Plank Hold':'Hold a straight line from head to heels with glutes and core tight.',
+  'Leg Circles':'Circle one leg from the hip while keeping the pelvis still.',
+  'Rolling Like a Ball':'Balance and roll back and up smoothly without using momentum.',
+  'Swan':'Lift the chest into a gentle backbend, lengthening through the spine.',
+  'Teaser (progression)':'Roll up to balance in a V-shape, arms and legs reaching.',
+  'Teaser':'Roll up to balance in a V-shape, arms and legs reaching.',
+  'Bridging':'Roll the hips up into a bridge, squeezing the glutes, then lower smoothly.',
+  'Single-Leg Bridge':'Hold a bridge on one leg while keeping the hips level.',
+  'Side Kick Series':'On your side, sweep the top leg with a stable, still torso.',
+  'Clamshell':'On your side, open the top knee while keeping the feet together.',
+  'Standing Leg Pumps':'Controlled standing leg lifts to fire the glutes and challenge balance.',
+  'Swimming':'Face down, flutter opposite arm and leg while lifting the chest.',
+  'Single-Leg Kick':'Prone, pulse the heel toward the glute with the chest lifted.',
+  'Spine Stretch Forward':'Sit tall, then reach forward, rounding the spine over the legs.',
+  'Quadruped Balance':'On hands and knees, extend opposite arm and leg, staying level.',
+  'Side Plank + Reach':'Hold a side plank and thread the top arm under and through.',
+  'Saw':'Seated twist, reaching past the opposite foot to lengthen the spine.',
+  'Corkscrew (modified)':'Legs together, circle them from the hips with a still torso.',
+  'Hollow Hold':'Press the low back down and hold a tight, stable banana shape.',
+  'Leg Pull Front':'From a plank, lift one leg at a time while keeping the hips steady.',
+  'Seal / Roll-Up finish':'Balance and roll back and up with control to finish the session.',
+  'Sun Salutation A':'Flowing sequence linking breath to movement to warm the whole body.',
+  'Sun Salutation B':'A stronger flow adding chair and warrior poses to build heat.',
+  'Downward Dog':'Inverted V \u2014 long spine, hips high, heels reaching toward the floor.',
+  'Low Lunge':'Deep lunge opening the hip flexors with the chest lifted.',
+  'Forward Fold':'Fold from the hips, letting the spine and hamstrings release.',
+  'Warrior II':'Strong wide stance, front knee bent, arms reaching, gaze forward.',
+  'Extended Side Angle':'Lengthen from back heel to front fingertips over a bent knee.',
+  'Triangle':'Straight legs, side body long, opening the chest toward the sky.',
+  'Chair Pose':'Sit into an imaginary chair, arms up, weight in the heels.',
+  'Crescent Lunge':'High lunge with arms overhead, hips square and sinking down.',
+  'Pigeon':'Deep outer-hip opener with the front shin forward and hips level.',
+  'Lizard':'Low lunge with both hands inside the front foot to open the hip.',
+  'Garland (Malasana)':'Deep squat with the elbows pressing the knees wide.',
+  'Bound Angle':'Seated with soles together, letting the knees ease toward the floor.',
+  'Tree Pose':'Balance on one leg with the other foot to the calf or thigh.',
+  'Eagle':'Wrap the arms and legs and balance with a steady, soft focus.',
+  'Half Moon':'Balance on one leg and hand, top leg and arm extending long.',
+  'Boat Pose':'Balance on the sit bones, lifting straight legs into a V.',
+  'Plank \u2192 Side Plank':'Hold plank, then stack into a side plank on each side.',
+  'Cat\u2013Cow':'Alternate arching and rounding the spine in time with the breath.',
+  'Cobra':'Lift the chest with the low ribs down and the elbows soft.',
+  'Bridge':'Lift the hips, rolling the spine up, chest reaching toward the chin.',
+  'Camel (modified)':'Kneeling backbend opening the chest with hips over the knees.',
+  'Sphinx':'Gentle propped backbend on the forearms with the chest open.',
+  'Child\u2019s Pose':'Rest hips to heels, arms forward, forehead down, breathing slowly.',
+  'Seated Forward Fold':'Fold over straight legs, lengthening the whole back body.',
+  'Supine Twist':'On your back, drop the knees to one side and breathe.',
+  'Legs-Up-the-Wall':'Lie back with the legs up the wall to restore and calm.',
+  'Savasana':'Lie still and relax completely, letting the practice settle.'
+};
+function combatDescFor(name){
+  var n=(name||'').toLowerCase();
+  if(/\b(warm|mobility|breath|cool|loosen|walk|cycle|swim|easy|recovery|conversational)\b/.test(n)) return 'Easy movement and breathing to prepare the body or wind down.';
+  if(/\b(core|brace|bracing|plank|carry|hold|hollow)\b/.test(n)) return 'Brace hard and keep the trunk steady and stable throughout.';
+  if(/\b(condition|conditioning|interval|intervals|bag|circuit|sprint|burpee|hiit)\b/.test(n)) return 'Push the pace through the work while keeping technique crisp.';
+  if(/\b(footwork|ladder|stance|motion|angles|shuffle|distance|timing)\b/.test(n)) return 'Light, precise foot movement to sharpen timing, range and balance.';
+  if(/\b(shadow|solo|suburi|kata|form|forms)\b/.test(n)) return 'Rehearse the movements solo with clean, deliberate reps.';
+  if(/\b(spar|sparring|round|rounds|rolling|bout|bouting|jigeiko|randori|flow|clinch|takedown|grappl|pad|pads|partner|application|counter|combos)\b/.test(n)) return 'Apply it live at controlled intensity \u2014 stay technical as you tire.';
+  if(/\b(explosive|jump|jumps|throw|throws|plyo|power)\b/.test(n)) return 'Fast, powerful reps with full recovery \u2014 quality over quantity.';
+  if(/\b(squat|row|press|deadlift|hinge|curl|raise|lunge|push-up|pull-up|chin|dip|bench)\b/.test(n)) return 'Supporting strength work \u2014 controlled reps through a full range.';
+  return 'Drill with focus on clean technique before adding speed or intensity.';
+}
+
 function buildStrength(st){
   const split = SPLITS[st.days]; let count = COUNT[st.level]; if(st.goal==='maintenance') count=Math.max(3,count-1);
   const useCond = st.goal==='lean' || st.body==='endo';
   const days = split.map((name,di)=>{
     const pats = TEMPLATE[name].slice(0,count); let mi=0;
     const blocks = pats.map(p=>{ const isC=!!EX[p].c; const sc=schemeForStyle(st.style, st.goal, isC, isC?mi++:0);
-      return {name:resolveEx(p, st.style, st.location), scheme:fmt(sc), rest:'Rest '+sc.rest}; });
+      return {name:resolveEx(p, st.style, st.location), scheme:fmt(sc), rest:'Rest '+sc.rest, desc:PAT_DESC[p]||'', pat:p}; });
     const legDay=/Legs|Lower|Full/.test(name);
     let intensity=({lean:3,athletic:3,muscular:4,strong:5,maintenance:2}[st.goal])||3; if(legDay) intensity=Math.min(5,intensity+1);
     const d={index:di+1,name,focus:name,intensity,blocks,warmup:WARMUP[st.style]};
@@ -542,7 +639,7 @@ function buildMind(st){
   const themes = MIND_SESSIONS[st.style];
   const days = Array.from({length:st.days},(_,i)=>{
     const theme = themes[i % themes.length];
-    const blocks = MIND_POOL[st.style][theme].map(pair=>({name:pair[0], scheme:pair[1], rest: st.style==='yoga'?'Move with the breath':'Slow, controlled tempo'}));
+    const blocks = MIND_POOL[st.style][theme].map(pair=>({name:pair[0], scheme:pair[1], rest: st.style==='yoga'?'Move with the breath':'Slow, controlled tempo', desc: MIND_DESC[pair[0]] || (st.style==='yoga'?'Hold with a steady breath, easing a little deeper as you settle.':'Slow, controlled reps from a strong, braced centre.'), pose: POSE_MAP[pair[0]]||''}));
     const intensity = st.style==='yoga' ? (theme.indexOf('Restorative')>=0?1:3) : 3;
     return {index:i+1, name:theme, focus:theme, intensity, blocks, warmup:WARMUP[st.style]};
   });
@@ -641,6 +738,135 @@ function renderTrainConsole(){
   const _qb=document.getElementById('bodyQuizBtn'); if(_qb) _qb.addEventListener('click', openBodyQuiz);
   wireCycle(el);
 }
+const MUSCLE_NAMES = {chest:'chest',delt_f:'front delts',delt_s:'side delts',delt_r:'rear delts',biceps:'biceps',triceps:'triceps',forearm:'forearms',abs:'abs',obliques:'obliques',quads:'quads',hamstrings:'hamstrings',glutes:'glutes',calves:'calves',lats:'lats',traps:'traps',upperback:'upper back',lowerback:'lower back'};
+const PAT_MUSCLES = {
+  horiz_push:['chest','delt_f','triceps'],
+  incline_push:['chest','delt_f','delt_s','triceps'],
+  vert_push:['delt_f','delt_s','triceps','traps'],
+  horiz_pull:['lats','upperback','delt_r','biceps'],
+  vert_pull:['lats','biceps','upperback'],
+  squat:['quads','glutes'],
+  hinge:['hamstrings','glutes','lowerback'],
+  lunge:['quads','glutes'],
+  biceps:['biceps'],
+  triceps:['triceps'],
+  sdelt:['delt_s'],
+  calves:['calves'],
+  core:['abs','obliques']
+};
+const PAT_STEPS = {
+  horiz_push:['Set a stable base \u2014 feet planted, shoulder blades pulled back and down.','Lower the weight (or your chest) under control to mid-chest.','Press back up to full extension, wrists stacked over the elbows.'],
+  incline_push:['Set the bench or body on an incline, shoulder blades retracted.','Lower under control to the upper chest.','Press up and slightly back to a full lockout.'],
+  vert_push:['Stand or sit tall, core braced, load at shoulder height.','Press straight overhead without leaning back.','Lower under control back to the shoulders.'],
+  horiz_pull:['Hinge slightly or set up chest-supported with a flat back.','Pull toward the torso, leading with the elbows.','Squeeze the shoulder blades, then lower under control.'],
+  vert_pull:['Start from a full hang or stretch, shoulders active.','Pull the elbows down and in until the chin/bar clears.','Lower slowly to full extension.'],
+  squat:['Feet shoulder-width, brace the core, chest tall.','Sit down and back, knees tracking over the toes.','Drive up through mid-foot to standing.'],
+  hinge:['Soft knees, push the hips back with a flat back.','Lower until you feel a hamstring stretch.','Drive the hips forward to stand tall, squeezing the glutes.'],
+  lunge:['Step into a split stance, torso upright.','Drop the back knee toward the floor.','Push through the front foot back to standing.'],
+  biceps:['Elbows pinned to your sides, palms up.','Curl the weight up, squeezing the biceps.','Lower slowly to a full stretch \u2014 no swinging.'],
+  triceps:['Fix the elbows in place, upper arms still.','Extend to a full lockout.','Return under control to a stretch.'],
+  sdelt:['Slight bend in the elbows, weights at your sides.','Raise out to shoulder height, leading with the elbows.','Lower slowly \u2014 avoid shrugging.'],
+  calves:['Balls of the feet on a step or the floor.','Rise up onto the toes as high as possible.','Pause, then lower for a deep stretch.'],
+  core:['Set a neutral spine and brace the abs.','Move slowly and with control.','Keep breathing steadily \u2014 quality over speed.']
+};
+function guessPattern(name){
+  var n=(name||'').toLowerCase();
+  if(/(incline|decline).*(push|press|fly)/.test(n)) return 'incline_push';
+  if(/overhead press|shoulder press|\bohp\b|pike push|military|arnold|handstand push/.test(n)) return 'vert_push';
+  if(/lateral raise|side raise|\blateral\b/.test(n)) return 'sdelt';
+  if(/calf|heel raise/.test(n)) return 'calves';
+  if(/leg curl|hamstring curl/.test(n)) return 'hinge';
+  if(/bench|chest press|\bfly\b|push-up|pushup|\bdip\b|\bchest\b/.test(n)) return 'horiz_push';
+  if(/pull-up|pull up|pullup|chin-up|chin up|chinup|pulldown|lat pull/.test(n)) return 'vert_pull';
+  if(/\brow\b|rows|face pull|inverted row/.test(n)) return 'horiz_pull';
+  if(/deadlift|romanian|\brdl\b|hip thrust|good morning|kettlebell swing|\bswing\b|hyperextension|back extension|glute bridge|\bbridge\b/.test(n)) return 'hinge';
+  if(/squat|leg press|leg extension|goblet|\bhack\b|wall sit/.test(n)) return 'squat';
+  if(/lunge|split squat|step-up|step up|bulgarian/.test(n)) return 'lunge';
+  if(/bicep|\bcurl\b/.test(n)) return 'biceps';
+  if(/tricep|pushdown|push-down|skull|kickback|overhead extension/.test(n)) return 'triceps';
+  if(/plank|crunch|sit-up|situp|hollow|leg raise|russian twist|dead bug|bird dog|hanging|\bab\b|\bcore\b|bracing/.test(n)) return 'core';
+  return '';
+}
+function muscleMapSVG(active){
+  var a=active||[];
+  function f(id){ return a.indexOf(id)>=0 ? '#F6B33D' : '#2b313b'; }
+  function sh(front){ var on = front ? (a.indexOf('delt_f')>=0||a.indexOf('delt_s')>=0) : (a.indexOf('delt_r')>=0||a.indexOf('delt_s')>=0); return on?'#F6B33D':'#2b313b'; }
+  var dc='#232833', stc='#3a414d';
+  return '<svg viewBox="0 0 216 188" class="mmap" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Target muscle map">'
+  +'<g stroke="'+stc+'" stroke-width="1">'
+  +'<circle cx="54" cy="20" r="9" fill="'+dc+'"/><rect x="50" y="28" width="8" height="6" fill="'+dc+'"/>'
+  +'<ellipse cx="39" cy="41" rx="8" ry="6" fill="'+sh(true)+'"/><ellipse cx="69" cy="41" rx="8" ry="6" fill="'+sh(true)+'"/>'
+  +'<rect x="42" y="39" width="11" height="14" rx="3" fill="'+f('chest')+'"/><rect x="55" y="39" width="11" height="14" rx="3" fill="'+f('chest')+'"/>'
+  +'<rect x="30" y="43" width="8" height="18" rx="4" fill="'+f('biceps')+'"/><rect x="70" y="43" width="8" height="18" rx="4" fill="'+f('biceps')+'"/>'
+  +'<rect x="30" y="63" width="7" height="15" rx="3" fill="'+f('forearm')+'"/><rect x="71" y="63" width="7" height="15" rx="3" fill="'+f('forearm')+'"/>'
+  +'<rect x="47" y="54" width="14" height="20" rx="3" fill="'+f('abs')+'"/>'
+  +'<rect x="42" y="54" width="5" height="18" rx="2" fill="'+f('obliques')+'"/><rect x="61" y="54" width="5" height="18" rx="2" fill="'+f('obliques')+'"/>'
+  +'<rect x="45" y="75" width="18" height="9" rx="3" fill="'+dc+'"/>'
+  +'<rect x="44" y="85" width="9" height="33" rx="4" fill="'+f('quads')+'"/><rect x="55" y="85" width="9" height="33" rx="4" fill="'+f('quads')+'"/>'
+  +'<rect x="45" y="122" width="7" height="28" rx="3" fill="'+dc+'"/><rect x="56" y="122" width="7" height="28" rx="3" fill="'+dc+'"/>'
+  +'<text x="54" y="166" fill="#7E8593" font-size="9" text-anchor="middle" stroke="none" font-family="monospace">FRONT</text>'
+  +'<circle cx="162" cy="20" r="9" fill="'+dc+'"/><rect x="158" y="28" width="8" height="6" fill="'+dc+'"/>'
+  +'<ellipse cx="147" cy="41" rx="8" ry="6" fill="'+sh(false)+'"/><ellipse cx="177" cy="41" rx="8" ry="6" fill="'+sh(false)+'"/>'
+  +'<rect x="152" y="37" width="20" height="9" rx="3" fill="'+f('traps')+'"/>'
+  +'<rect x="138" y="43" width="8" height="18" rx="4" fill="'+f('triceps')+'"/><rect x="178" y="43" width="8" height="18" rx="4" fill="'+f('triceps')+'"/>'
+  +'<rect x="138" y="63" width="7" height="15" rx="3" fill="'+f('forearm')+'"/><rect x="179" y="63" width="7" height="15" rx="3" fill="'+f('forearm')+'"/>'
+  +'<rect x="150" y="47" width="8" height="20" rx="2" fill="'+f('lats')+'"/><rect x="166" y="47" width="8" height="20" rx="2" fill="'+f('lats')+'"/>'
+  +'<rect x="158" y="46" width="8" height="13" rx="2" fill="'+f('upperback')+'"/>'
+  +'<rect x="153" y="67" width="18" height="9" rx="3" fill="'+f('lowerback')+'"/>'
+  +'<rect x="151" y="77" width="22" height="12" rx="5" fill="'+f('glutes')+'"/>'
+  +'<rect x="152" y="89" width="9" height="31" rx="4" fill="'+f('hamstrings')+'"/><rect x="163" y="89" width="9" height="31" rx="4" fill="'+f('hamstrings')+'"/>'
+  +'<rect x="153" y="124" width="7" height="26" rx="3" fill="'+f('calves')+'"/><rect x="164" y="124" width="7" height="26" rx="3" fill="'+f('calves')+'"/>'
+  +'<text x="162" y="166" fill="#7E8593" font-size="9" text-anchor="middle" stroke="none" font-family="monospace">BACK</text>'
+  +'</g></svg>';
+}
+const POSE_SHAPES = JSON.parse('{"stand":{"hd":[80,20,7],"nk":[80,34],"pv":[80,72],"eL":[70,52],"hL":[68,72],"eR":[90,52],"hR":[92,72],"kL":[76,95],"fL":[76,118],"kR":[84,95],"fR":[84,118]},"armsUp":{"hd":[80,22,7],"nk":[80,36],"pv":[80,74],"eL":[74,24],"hL":[72,10],"eR":[86,24],"hR":[88,10],"kL":[76,96],"fL":[76,118],"kR":[84,96],"fR":[84,118]},"chair":{"hd":[78,28,7],"nk":[80,42],"pv":[82,66],"eL":[74,28],"hL":[72,14],"eR":[86,28],"hR":[88,14],"kL":[68,86],"fL":[74,118],"kR":[96,86],"fR":[88,118]},"fold":{"hd":[80,90,6],"nk":[80,72],"pv":[80,46],"eL":[80,84],"hL":[80,112],"eR":[80,84],"hR":[80,112],"kL":[74,80],"fL":[74,118],"kR":[86,80],"fR":[86,118]},"lunge":{"hd":[68,28,7],"nk":[70,42],"pv":[76,64],"eL":[64,28],"hL":[62,14],"eR":[76,28],"hR":[78,14],"kL":[96,92],"fL":[104,118],"kR":[58,96],"fR":[44,118]},"warrior2":{"hd":[80,30,7],"nk":[80,44],"pv":[80,72],"eL":[64,44],"hL":[50,44],"eR":[96,44],"hR":[110,44],"kL":[100,92],"fL":[112,118],"kR":[60,96],"fR":[48,118]},"triangle":{"hd":[62,42,7],"nk":[66,52],"pv":[80,70],"eL":[70,40],"hL":[64,26],"eR":[92,74],"hR":[104,98],"kL":[104,96],"fL":[112,118],"kR":[60,96],"fR":[48,118]},"downdog":{"hd":[60,66,6],"nk":[66,58],"pv":[80,40],"eL":[58,86],"hL":[48,116],"eR":[58,86],"hR":[52,116],"kL":[96,80],"fL":[112,116],"kR":[96,80],"fR":[108,116]},"plank":{"hd":[42,70,6],"nk":[50,72],"pv":[90,84],"eL":[50,90],"hL":[50,110],"eR":[50,90],"hR":[50,110],"kL":[110,90],"fL":[120,110],"kR":[110,90],"fR":[120,110]},"sideplank":{"hd":[44,58,6],"nk":[52,66],"pv":[92,92],"eL":[52,90],"hL":[52,110],"eR":[58,54],"hR":[60,40],"kL":[100,100],"fL":[118,110],"kR":[100,100],"fR":[118,110]},"cobra":{"hd":[54,60,6],"nk":[62,72],"pv":[96,102],"eL":[70,92],"hL":[64,102],"eR":[70,92],"hR":[64,102],"kL":[108,106],"fL":[122,110],"kR":[108,106],"fR":[122,110]},"allfours":{"hd":[46,70,6],"nk":[54,66],"pv":[92,66],"eL":[52,86],"hL":[52,104],"eR":[52,86],"hR":[52,104],"kL":[94,86],"fL":[96,106],"kR":[94,86],"fR":[100,106]},"birddog":{"hd":[46,70,6],"nk":[54,66],"pv":[92,66],"eL":[36,60],"hL":[24,54],"eR":[52,86],"hR":[52,104],"kL":[110,58],"fL":[122,54],"kR":[94,86],"fR":[100,106]},"tree":{"hd":[80,22,7],"nk":[80,36],"pv":[80,72],"eL":[74,26],"hL":[80,10],"eR":[86,26],"hR":[80,10],"kL":[78,95],"fL":[78,118],"kR":[98,80],"fR":[82,88]},"halfmoon":{"hd":[56,56,7],"nk":[62,62],"pv":[80,72],"eL":[52,66],"hL":[46,100],"eR":[70,46],"hR":[72,32],"kL":[88,92],"fL":[94,118],"kR":[70,64],"fR":[44,60]},"boat":{"hd":[52,52,7],"nk":[58,60],"pv":[74,84],"eL":[72,64],"hL":[86,58],"eR":[72,64],"hR":[86,58],"kL":[92,66],"fL":[110,48],"kR":[92,68],"fR":[110,50]},"seated":{"hd":[52,44,7],"nk":[54,58],"pv":[58,84],"eL":[64,66],"hL":[74,82],"eR":[64,66],"hR":[74,82],"kL":[80,86],"fL":[104,90],"kR":[80,88],"fR":[104,92]},"seatedfold":{"hd":[82,80,6],"nk":[70,74],"pv":[56,84],"eL":[84,84],"hL":[98,90],"eR":[84,84],"hR":[98,90],"kL":[80,86],"fL":[104,92],"kR":[80,88],"fR":[104,94]},"bridge":{"hd":[34,96,6],"nk":[44,94],"pv":[80,72],"eL":[44,102],"hL":[44,112],"eR":[44,102],"hR":[44,112],"kL":[96,86],"fL":[104,112],"kR":[96,86],"fR":[104,112]},"supine":{"hd":[34,100,6],"nk":[46,102],"pv":[92,104],"eL":[62,106],"hL":[74,110],"eR":[62,106],"hR":[74,110],"kL":[112,104],"fL":[126,104],"kR":[112,104],"fR":[126,104]},"legsup":{"hd":[38,104,6],"nk":[50,104],"pv":[86,104],"eL":[64,108],"hL":[74,112],"eR":[64,108],"hR":[74,112],"kL":[86,80],"fL":[86,52],"kR":[90,80],"fR":[90,52]},"child":{"hd":[52,92,6],"nk":[60,86],"pv":[94,90],"eL":[42,94],"hL":[30,98],"eR":[42,94],"hR":[30,98],"kL":[102,98],"fL":[110,104],"kR":[102,98],"fR":[112,104]},"sidelying":{"hd":[34,90,6],"nk":[44,94],"pv":[92,96],"eL":[46,80],"hL":[42,66],"eR":[46,80],"hR":[42,66],"kL":[112,96],"fL":[126,96],"kR":[112,74],"fR":[126,66]},"twist":{"hd":[40,100,6],"nk":[50,102],"pv":[86,100],"eL":[50,114],"hL":[62,116],"eR":[50,90],"hR":[40,86],"kL":[86,84],"fL":[74,78],"kR":[86,86],"fR":[76,80]},"rolling":{"hd":[70,66,7],"nk":[68,76],"pv":[74,92],"eL":[80,82],"hL":[86,88],"eR":[80,82],"hR":[86,88],"kL":[86,78],"fL":[86,90],"kR":[86,80],"fR":[86,92]}}');
+const COMBAT_SHAPES = JSON.parse('{"guard":{"hd":[80,24,7],"nk":[80,38],"pv":[80,70],"eL":[70,46],"hL":[74,32],"eR":[90,46],"hR":[86,32],"kL":[70,92],"fL":[64,118],"kR":[92,92],"fR":[100,118]},"strike":{"hd":[78,26,7],"nk":[78,40],"pv":[80,70],"eL":[72,46],"hL":[76,34],"eR":[96,40],"hR":[116,38],"kL":[72,92],"fL":[66,118],"kR":[92,92],"fR":[100,118]},"kick":{"hd":[72,26,7],"nk":[72,40],"pv":[76,68],"eL":[64,46],"hL":[68,32],"eR":[80,46],"hR":[84,36],"kL":[70,92],"fL":[68,118],"kR":[96,66],"fR":[118,58]},"footwork":{"hd":[80,26,7],"nk":[80,40],"pv":[80,70],"eL":[70,54],"hL":[72,66],"eR":[90,54],"hR":[88,66],"kL":[66,94],"fL":[58,118],"kR":[94,94],"fR":[102,118]},"ground":{"hd":[58,66,6],"nk":[64,72],"pv":[92,88],"eL":[56,88],"hL":[52,100],"eR":[56,88],"hR":[52,100],"kL":[100,100],"fL":[108,106],"kR":[100,100],"fR":[110,106]},"active":{"hd":[80,20,7],"nk":[80,34],"pv":[80,64],"eL":[66,30],"hL":[58,18],"eR":[94,30],"hR":[102,18],"kL":[70,84],"fL":[66,106],"kR":[92,84],"fR":[98,106]},"weaponSword":{"hd":[80,24,7],"nk":[80,38],"pv":[80,72],"eL":[76,50],"hL":[92,52],"eR":[84,50],"hR":[92,52],"kL":[72,96],"fL":[66,118],"kR":[92,96],"fR":[100,118],"wep":[[92,52],[132,28]]},"weaponStaff":{"hd":[80,26,7],"nk":[80,40],"pv":[80,72],"eL":[64,56],"hL":[60,60],"eR":[96,50],"hR":[104,44],"kL":[72,96],"fL":[66,118],"kR":[92,96],"fR":[100,118],"wep":[[52,66],[116,36]]}}');
+const POSE_MAP = JSON.parse('{"The Hundred":"supine","Roll-Up":"boat","Single-Leg Stretch":"supine","Criss-Cross":"supine","Plank Hold":"plank","Leg Circles":"supine","Rolling Like a Ball":"rolling","Swan":"cobra","Teaser (progression)":"boat","Teaser":"boat","Bridging":"bridge","Single-Leg Bridge":"bridge","Side Kick Series":"sidelying","Clamshell":"sidelying","Standing Leg Pumps":"stand","Swimming":"cobra","Single-Leg Kick":"cobra","Spine Stretch Forward":"seatedfold","Quadruped Balance":"birddog","Side Plank + Reach":"sideplank","Saw":"seated","Corkscrew (modified)":"supine","Hollow Hold":"boat","Leg Pull Front":"plank","Seal / Roll-Up finish":"rolling","Sun Salutation A":"armsUp","Sun Salutation B":"armsUp","Downward Dog":"downdog","Low Lunge":"lunge","Forward Fold":"fold","Warrior II":"warrior2","Extended Side Angle":"triangle","Triangle":"triangle","Chair Pose":"chair","Crescent Lunge":"lunge","Pigeon":"seated","Lizard":"lunge","Garland (Malasana)":"chair","Bound Angle":"seated","Tree Pose":"tree","Eagle":"tree","Half Moon":"halfmoon","Boat Pose":"boat","Plank \\u2192 Side Plank":"sideplank","Cat\\u2013Cow":"allfours","Cobra":"cobra","Bridge":"bridge","Camel (modified)":"cobra","Sphinx":"cobra","Child\\u2019s Pose":"child","Seated Forward Fold":"seatedfold","Supine Twist":"twist","Legs-Up-the-Wall":"legsup","Savasana":"supine"}');
+function figureSVG(J){
+  if(!J) return '';
+  function L(a,b){ return '<line x1="'+J[a][0]+'" y1="'+J[a][1]+'" x2="'+J[b][0]+'" y2="'+J[b][1]+'"/>'; }
+  var body='<g stroke="#c4c7cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">'
+    + L('nk','eL')+L('eL','hL')+L('nk','eR')+L('eR','hR')+L('nk','pv')+L('pv','kL')+L('kL','fL')+L('pv','kR')+L('kR','fR')+'</g>';
+  var head='<circle cx="'+J.hd[0]+'" cy="'+J.hd[1]+'" r="'+J.hd[2]+'" fill="#c4c7cf"/>';
+  var wep = J.wep ? '<line x1="'+J.wep[0][0]+'" y1="'+J.wep[0][1]+'" x2="'+J.wep[1][0]+'" y2="'+J.wep[1][1]+'" stroke="#F6B33D" stroke-width="3" stroke-linecap="round"/>' : '';
+  var ground='<line x1="12" y1="118" x2="148" y2="118" stroke="#2A2F39" stroke-width="2"/>';
+  return '<svg viewBox="0 0 160 130" class="figsvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Movement figure">'+ground+body+wep+head+'</svg>';
+}
+function poseSVG(k){ return figureSVG(POSE_SHAPES[k]); }
+function combatSVG(k){ return figureSVG(COMBAT_SHAPES[k]); }
+function poseFor(name){ return POSE_MAP[name]||''; }
+function combatShapeFor(name, style, isW){
+  var n=(name||'').toLowerCase(); style=(style||'').toLowerCase();
+  if(/warm|mobility|breath|cool|loosen|walk|cycle|swim|easy|recovery|conversational/.test(n)) return 'active';
+  if(isW){ if(/condition|interval|circuit|sprint|burpee|fitness/.test(n)) return 'active'; return (/staff|kali|escrima|stick|spear/.test(style))?'weaponStaff':'weaponSword'; }
+  if(/condition|interval|bag|circuit|sprint|burpee|hiit|fitness/.test(n)) return 'active';
+  if(/footwork|ladder|stance|motion|angles|shuffle|distance|timing/.test(n)) return 'footwork';
+  if(/\b(kick|teep|knee)\b/.test(n)) return 'kick';
+  if(/spar|round|rolling|bout|randori|grappl|clinch|takedown|jigeiko/.test(n)) return (/bjj|wrestl|grappl|judo/.test(style)||/roll|grappl|takedown|clinch/.test(n))?'ground':'guard';
+  if(/strike|jab|cross|hook|combo|punch|\bpad\b|pads|counter|application/.test(n)) return 'strike';
+  return 'guard';
+}
+function _wrap(inner){ return '<div class="exdetail hidden">'+inner+'</div>'; }
+function muscleDetailHTML(pat){
+  var ids=PAT_MUSCLES[pat]||[]; var names=ids.map(function(id){return MUSCLE_NAMES[id]||id;}).join(', ');
+  var steps=(PAT_STEPS[pat]||[]).map(function(s){return '<li>'+s+'</li>';}).join('');
+  return _wrap('<div class="exwrap">'+muscleMapSVG(ids)+'<div class="exinfo"><div class="extar"><span>Targets</span>'+names+'</div><ol class="exsteps">'+steps+'</ol></div></div>');
+}
+function figureDetailHTML(svg,label,text){
+  return _wrap('<div class="exwrap">'+svg+'<div class="exinfo"><div class="extar"><span>'+label+'</span>'+text+'</div></div></div>');
+}
+function exDetail(b){
+  if(b.pat) return {label:'muscles &amp; form', html:muscleDetailHTML(b.pat)};
+  if(b.pose) return {label:'shape &amp; form', html:figureDetailHTML(poseSVG(b.pose),'Shape',b.desc||'Move slowly with steady, controlled breath.')};
+  if(b.shape) return {label:'stance &amp; form', html:figureDetailHTML(combatSVG(b.shape),'Drill',b.desc||'Drill with clean technique before adding intensity.')};
+  var g=guessPattern(b.name);
+  if(g) return {label:'muscles &amp; form', html:muscleDetailHTML(g)};
+  var p=poseFor(b.name);
+  if(p) return {label:'shape &amp; form', html:figureDetailHTML(poseSVG(p),'Shape',b.desc||'Move slowly with steady, controlled breath.')};
+  return null;
+}
+function toggleEx(btn){ var d=btn.nextElementSibling; if(!d) return; var hid=d.classList.toggle('hidden'); btn.innerHTML = hid ? (btn.getAttribute('data-lbl')+' \u25b8') : 'hide \u25be'; }
+
 function renderPlan(plan){
   applyCycle(plan);
   lastBuiltPlan=plan; try{ lastBuiltTrain=JSON.parse(JSON.stringify(train)); }catch(e){ lastBuiltTrain=null; }
@@ -654,7 +880,12 @@ function renderPlan(plan){
     </div></div>${plan.cycle?cycleBanner(plan.cycle):``}<div class="grid">`;
   plan.days.forEach((d,i)=>{
     const dots=Array.from({length:5},(_,k)=>`<span class="dot${k<d.intensity?' on':''}"></span>`).join('');
-    const blocks=d.blocks.map(b=>`<div class="block"><div class="m">${b.name}</div><div class="s">${b.scheme}</div><div class="r">${b.rest}</div></div>`).join('');
+    const blocks=d.blocks.map(function(b){
+      var dt=exDetail(b);
+      var more = dt ? `<button type="button" class="exmore" data-lbl="${dt.label}" onclick="toggleEx(this)">${dt.label} \u25b8</button>` : '';
+      var det = dt ? dt.html : '';
+      return `<div class="block"><div class="m">${b.name}</div><div class="s">${b.scheme}</div><div class="r">${b.rest}</div>${b.desc?`<div class="bd">${b.desc}</div>`:''}${more}${det}</div>`;
+    }).join('');
     const fin=d.finisher?`<div class="finisher"><div class="fk">Conditioning finisher</div><div class="fv">${d.finisher}</div></div>`:'';
     h+=`<div class="day" style="animation-delay:${i*55}ms"><div class="dhead">
       <div><div class="dtag">DAY ${String(d.index).padStart(2,'0')}</div><h3 class="dname">${d.focus}</h3></div>
